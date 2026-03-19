@@ -1,5 +1,5 @@
 {
-  "name": "mapx-sdk",
+  "name": "mapx-llm-skills",
   "description": "Skills for developing with the MapX SDK — embedding interactive geospatial maps, managing views, querying data, and building map-powered applications using the UNEP/GRID-Geneva MapX platform",
   "version": "1.0.0",
   "author": {
