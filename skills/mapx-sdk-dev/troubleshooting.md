@@ -95,6 +95,19 @@ Common issues organized by symptom.
 - Try after `map_wait_idle()`
 - Check if immersive mode is active — some modals require UI chrome
 
+## SDK Call Hangs Forever
+
+**Symptom**: `await mapx.ask(...)` never resolves — no result, no error.
+
+- If the resolver throws an exception (rather than returning normally),
+  the SDK's FrameManager drops the request without resolving the Promise.
+  Wrap calls in a timeout — see
+  [limitations-and-workarounds.md](limitations-and-workarounds.md) §9.
+- Check that `ready` has fired before calling `ask()`
+- Check browser console for iframe errors or postMessage failures
+- For `get_view_source_summary` on `rt` views, the WMS call has a 20s
+  internal timeout — it will eventually return, but may be slow
+
 ## Performance Issues
 
 **Symptom**: Map is slow or unresponsive with many layers active.
@@ -115,6 +128,20 @@ Common issues organized by symptom.
 ## Common Code Mistakes
 
 ```javascript
+// WRONG: wrapper treats [] as falsy, strips parameters
+function mapMethod(method, parameters) {
+  const opts = { method };
+  if (parameters) opts.parameters = parameters; // [] is falsy!
+  return mapx.ask("map", opts);
+}
+
+// RIGHT: check for undefined, not truthiness
+function mapMethod(method, parameters) {
+  const opts = { method };
+  if (parameters !== undefined) opts.parameters = parameters;
+  return mapx.ask("map", opts);
+}
+
 // WRONG: calling ask() before ready
 const mapx = initSDK(container);
 await mapx.ask("view_add", { idView: "..." }); // Will hang!

@@ -173,6 +173,13 @@ const features = await mapx.ask("map", {
 - Only returns vector features — raster layers produce no results
 - Results are serialized through postMessage, so very large result sets
   may be slow or truncated
+- Results include Mapbox-internal fields (`layer`, `source`, `sourceLayer`,
+  `state`) that are not part of standard GeoJSON. Strip them before exporting:
+  ```javascript
+  function toCleanGeoJSON(features) {
+    return features.map(({ layer, source, sourceLayer, state, ...rest }) => rest);
+  }
+  ```
 - Use the Mapbox GL `filter` option to narrow results:
   ```javascript
   parameters: [geometry, { layers: ["my-layer-id"] }]
@@ -192,7 +199,7 @@ const lngLat = await mapx.ask("map", {
 
 | Capability | `vt` | `rt` | `cc` | GeoJSON |
 |-----------|------|------|------|---------|
-| Numeric filter | Yes | No | No | No |
+| Numeric filter | Yes | No | No | Client-side* |
 | Text filter | Yes | No | No | No |
 | Transparency | Yes | Yes | Yes | Yes |
 | Attribute config | Yes | No | No | No |
@@ -202,3 +209,9 @@ const lngLat = await mapx.ask("map", {
 | Spatial query | Yes | No | No | Yes |
 | Legend image | Yes | Yes | Varies | No |
 | Dashboard | Sometimes | No | Sometimes | No |
+
+*\* GeoJSON views don't support `set_view_layer_filter_numeric`. As a
+client-side alternative, use `view_geojson_set_style` to dim non-matching
+features via a Mapbox paint expression (e.g. `"circle-opacity": 0.08`)
+while keeping matching features at full opacity. Store the original paint
+so you can restore it on "clear".*

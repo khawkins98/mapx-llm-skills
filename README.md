@@ -106,7 +106,7 @@ The MapX SDK uses a **resolver pattern**:
 - **Cross-project scope**: `view_add` only works for views in the connected project
 - **No native events**: Parent page can't listen to Mapbox `moveend`, `zoomend`, etc.
 - **No click callbacks on passthrough layers**: `map.on("click", ...)` not possible
-- **No `toggle_draw_mode`**: Referenced in docs but doesn't exist
+- **No `toggle_draw_mode`**: Was removed from the SDK after 2020; even when it existed, it returned only a boolean and couldn't pass drawn geometry back to the parent page
 - **Serialization boundary**: Everything through postMessage must be JSON-serializable
 
 ## Resources
