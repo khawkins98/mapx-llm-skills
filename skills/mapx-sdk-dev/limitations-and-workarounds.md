@@ -3,10 +3,11 @@
 > **SDK version context**: These limitations were observed against the
 > deployed MapX SDK at `app.mapx.org/sdk/mxsdk.umd.js` (embedded version
 > string 1.13.19) during March 2026. The SDK does not pin versions in its
-> UMD URL, so behavior may change without notice. The GitHub `master`
+> UMD URL, so behavior may change without notice. The GitHub `main`
 > branch (`@fxi/mxsdk` 1.9.40-alpha.1) does not match the deployed build.
-> Where a limitation contradicts the SDK source or docs, the evidence and
-> reasoning are noted inline.
+> Note: the default branch is `main`, not `master` (the `master` branch
+> is stale). Where a limitation contradicts the SDK source or docs, the
+> evidence and reasoning are noted inline.
 
 ## 1. Cross-Project View Scope
 
@@ -123,9 +124,11 @@ but it has since been removed from the deployed SDK. Calling it throws
 "unknown resolver."
 
 > *Evidence*: Observed 2026-03-19 against the deployed UMD (v1.13.19).
-> The resolver is absent from the current `mapx_resolvers/static.js`.
-> The underlying `drawModeToggle()` function still exists internally
-> (`app/src/js/draw/helper.js`) but is no longer exposed through the SDK.
+> The resolver is absent from `mapx_resolvers/static.js` on the `main`
+> branch (the active default branch). It is still present on the stale
+> `master` branch, which may cause confusion when reading source code.
+> The underlying `drawModeToggle()` function exists internally
+> (`app/src/js/draw/helper.js`) but is not exposed through the SDK.
 >
 > Even when `toggle_draw_mode` existed, it would not have been useful for
 > spatial queries: it toggled the internal MapboxDraw UI and returned only

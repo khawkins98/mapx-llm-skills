@@ -1,23 +1,20 @@
 # MapX LLM Skills
 
-Claude Code skills for developing with the [MapX SDK](https://github.com/unep-grid/mapx/tree/master/app/src/js/sdk) — the JavaScript SDK for embedding interactive geospatial maps from the [MapX platform](https://app.mapx.org) (UNEP/GRID-Geneva).
+Claude Code skills for developing with the [MapX SDK](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), the JavaScript SDK for embedding maps from the [MapX platform](https://app.mapx.org) (UNEP/GRID-Geneva).
 
-## Origin Story
+## Background
 
-These skills grew out of a hands-on exploration of what's possible with MapX embeddings. In early 2026, while investigating the capabilities of the MapX geospatial platform for disaster risk reduction (DRR) work at UNDRR, I built a proof-of-concept demo that embeds MapX maps using the SDK. The demo evolved from a simple iframe embed into a full-featured application with 11 curated DRR views, multi-layer scenario workflows, custom data overlays (both SDK-managed and Mapbox passthrough), analysis tools (filtering, spatial queries, statistics, export), and several SDK features that the platform itself barely documents.
+I built these while working on a [proof-of-concept demo](https://github.com/khawkins/mapx-demo-embed) that embeds MapX maps for disaster risk reduction work at UNDRR. The demo started as a simple iframe embed and grew into something more involved as I dug into the SDK.
 
-Along the way, I discovered that while [Mapbox has published agent skills](https://github.com/mapbox/mapbox-agent-skills) and an [MCP DevKit](https://www.mapbox.com/blog/the-mapbox-mcp-devkit-equip-ai-coding-tools-with-geospatial-skills-for-mapbox-development) for AI coding tools, **MapX has zero LLM skills, plugins, or AI integrations of any kind**. The SDK documentation lives in the [GitHub source](https://github.com/unep-grid/mapx/tree/master/app/src/js/sdk) and is sparse — there's no public REST API for view discovery, no formal method catalog, and several features that only work if you already know the resolver names.
+The MapX SDK documentation is mostly in the [GitHub source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk). It's functional but thin. There's no method catalog, no public API for view discovery, and some features only work if you already know the resolver names. I spent a lot of time figuring things out by reading source code and testing, and these skills capture what I learned so the next person doesn't have to repeat it.
 
-The knowledge captured in these skills was hard-won through trial and error:
-- Discovering that cross-project `view_add` fails silently (no error, no network request, nothing)
-- Learning that `toggle_draw_mode` doesn't exist despite being referenced in wiki examples
-- Building coordinate matching fallbacks because the postMessage bridge can't pass click handler callbacks
-- Figuring out that `map_wait_idle()` must precede any dashboard or filter operation
-- Working out that `getLayer`/`getSource` return values are unreliable through postMessage serialization
+A few examples of the kind of things that tripped me up:
+- `view_add` fails silently for views outside the current project (no error, no network request)
+- `toggle_draw_mode` is referenced in wiki examples but was removed from the SDK
+- The postMessage bridge can't pass callbacks, so click interaction on custom layers needs a coordinate-matching workaround
+- `map_wait_idle()` has to come before dashboard or filter operations, but nothing tells you that
 
-Rather than letting this knowledge stay locked in one project, I packaged it as reusable Claude Code skills so any MapX embedding project can benefit.
-
-The reference demo that generated this knowledge lives at [mapx-demo-embed](https://github.com/khawkins/mapx-demo-embed).
+As of early 2026, MapX doesn't have any LLM skills or AI coding integrations. [Mapbox has some](https://github.com/mapbox/mapbox-agent-skills), so there's precedent for this kind of thing in the geospatial space.
 
 ## Skills
 
@@ -25,7 +22,7 @@ The reference demo that generated this knowledge lives at [mapx-demo-embed](http
 
 Auto-invoked when working on code that uses the MapX SDK. Provides:
 
-- Complete method catalog (48+ resolver methods with signatures and return types)
+- Method catalog (48+ resolver methods with signatures and return types)
 - SDK initialization patterns (Manager constructor, singleton, ready event)
 - View management (add/remove, GeoJSON views, Mapbox passthrough, layer ordering)
 - Navigation and display (fly-to, projections, 3D modes, country/region codes)
@@ -42,7 +39,7 @@ Auto-invoked when working on code that uses the MapX SDK. Provides:
 
 ### `mapx-embed-scaffold` — Project Scaffolding
 
-User-invoked (`/mapx-embed-scaffold`). Generates a complete MapX embed project with:
+User-invoked (`/mapx-embed-scaffold`). Generates a starter MapX embed project with:
 
 - HTML + CSS sidebar/map layout
 - Vite dev server and build configuration
@@ -78,7 +75,7 @@ claude plugins add github khawkins/mapx-llm-skills
 ### MapX Platform
 
 - **Platform**: https://app.mapx.org (UNEP/GRID-Geneva)
-- **SDK source**: https://github.com/unep-grid/mapx/tree/master/app/src/js/sdk
+- **SDK source**: https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk
 - **UMD script**: `https://app.mapx.org/sdk/mxsdk.umd.js`
 - **Communication**: postMessage bridge (serialized JSON only)
 - **Map engine**: Mapbox GL JS (wrapped by MapX, accessible via passthrough)
@@ -112,7 +109,7 @@ The MapX SDK uses a **resolver pattern**:
 ## Resources
 
 - [MapX Platform](https://app.mapx.org)
-- [MapX SDK Source](https://github.com/unep-grid/mapx/tree/master/app/src/js/sdk)
+- [MapX SDK Source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
 - [MapX GitHub](https://github.com/unep-grid/mapx)
 - [Mapbox GL JS Docs](https://docs.mapbox.com/mapbox-gl-js/api/) (underlying map engine)
 - [UNDRR Mangrove Component Library](https://unisdr.github.io/undrr-mangrove/) (UI components used in the demo)

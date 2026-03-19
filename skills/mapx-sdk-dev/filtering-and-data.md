@@ -40,7 +40,10 @@ await mapx.ask("set_view_layer_filter_numeric", {
 });
 ```
 
-**Important**: Use `from`/`to` params, not the deprecated `value` array.
+**Note**: The examples here use `from`/`to`/`attribute`, which worked in
+testing against the deployed SDK (v1.13.19). The SDK source documents
+`{idView, value}` as the parameter shape. If `from`/`to` doesn't work,
+try the `value`-based form. This discrepancy needs further verification.
 
 ## Text/Category Filters
 
@@ -129,9 +132,10 @@ const summary = await mapx.ask("get_view_source_summary", {
 
 ## Data Export
 
-Only works for GeoJSON views created via `view_geojson_create`.
-Native MapX vector/raster views cannot be bulk-exported — they are
-served as tiled data.
+`download_view_source_geojson` is intended for GeoJSON views created via
+`view_geojson_create`. For native views, the SDK provides
+`download_view_source_vector` and `download_view_source_external`
+(not yet documented in this skill).
 
 ```javascript
 const geojson = await mapx.ask("download_view_source_geojson", {

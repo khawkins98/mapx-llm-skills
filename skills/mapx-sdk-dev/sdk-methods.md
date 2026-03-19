@@ -1,7 +1,10 @@
 # MapX SDK Method Catalog
 
-Complete reference for all `mapx.ask()` resolver methods. Every method
-returns a Promise. Parameters are passed as a single object.
+Reference for `mapx.ask()` resolver methods tested against the deployed
+SDK (v1.13.19, March 2026). The SDK has additional methods not yet
+documented here; see the [SDK source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
+for the full list. Every method returns a Promise. Parameters are passed
+as a single object.
 
 ## Map Navigation & Display
 
@@ -99,8 +102,8 @@ await mapx.ask("set_mode_aerial", { action: "toggle" });
 Hide all MapX UI chrome for a clean presentation view.
 
 ```javascript
-await mapx.ask("set_immersive_mode", { action: "toggle" });
-// Actions: "show", "hide", "toggle"
+await mapx.ask("set_immersive_mode", { toggle: true });
+// Or: { enable: true } / { enable: false }
 ```
 
 ---
@@ -216,6 +219,12 @@ await mapx.ask("view_geojson_delete", { idView: viewId });
 
 Filter a vector tile view by numeric attribute range. Only works on `vt` views.
 
+> **Parameter uncertainty**: The examples below use `from`/`to`/`attribute`,
+> which worked in testing against the deployed SDK (v1.13.19). However,
+> the SDK source documents `{idView, value}` as the parameter shape. If
+> `from`/`to` doesn't work, try the `value`-based form instead. This
+> needs further verification.
+
 ```javascript
 await mapx.ask("set_view_layer_filter_numeric", {
   idView: "MX-XXXXX",
@@ -322,8 +331,10 @@ const summary = await mapx.ask("get_view_source_summary", {
 
 ### download_view_source_geojson
 
-Returns GeoJSON for a view. Only works for GeoJSON views created via
-`view_geojson_create`, not native MapX vector/raster views.
+Returns GeoJSON for a view. Intended for GeoJSON views created via
+`view_geojson_create`. For native vector/raster views, the SDK also
+provides `download_view_source_vector` and `download_view_source_external`
+(not yet documented in this skill).
 
 ```javascript
 const geojson = await mapx.ask("download_view_source_geojson", {
@@ -336,11 +347,13 @@ const geojson = await mapx.ask("download_view_source_geojson", {
 
 ## UI Controls
 
-### set_language / get_language
+### set_language / get_language / get_languages
 
 ```javascript
 await mapx.ask("set_language", { lang: "fr" }); // ISO 639-1 code
 const lang = await mapx.ask("get_language");     // => "fr"
+const langs = await mapx.ask("get_languages");
+// => ["en", "fr", "es", "ru", "zh", "ar", "de", "pt", "fa", "ps"]
 ```
 
 ### set_theme / get_themes_id / get_theme_id
@@ -364,9 +377,21 @@ if (hasDash) {
 ### set_vector_highlight
 
 Enable/disable the click highlight ring on vector features.
+On newer SDK versions, this may be deprecated in favor of
+`set_vector_spotlight` (same parameters).
 
 ```javascript
 await mapx.ask("set_vector_highlight", { enable: true });
+// Optional parameters: nLayers (number), calcArea (boolean)
+```
+
+### set_panel_left_visibility
+
+Show or hide the MapX left panel (view list sidebar).
+
+```javascript
+await mapx.ask("set_panel_left_visibility", { show: true });
+await mapx.ask("set_panel_left_visibility", { show: false });
 ```
 
 ### show_modal_map_composer
@@ -384,6 +409,8 @@ Open the MapX sharing modal (link, embed code, social).
 
 ```javascript
 await mapx.ask("show_modal_share");
+// Optionally pre-select views to share:
+await mapx.ask("show_modal_share", { idView: "MX-XXXXX" });
 ```
 
 ### close_modal_all
@@ -473,10 +500,18 @@ mapx.on("click_attributes", (data) => {
   // User clicked a feature
   // data.attributes: array of feature property objects
   // Only fires for MapX-managed views, NOT passthrough layers
+  // The event payload also appears to include click coordinates,
+  // which the coordinate matching workaround relies on, but the
+  // exact payload shape is not fully documented here.
 });
 ```
 
-**Known events**: `ready`, `click_attributes`
+**Events tested in this skill**: `ready`, `click_attributes`
+
+The SDK supports additional events (e.g., `view_added`, `view_removed`,
+`language_change`, `project_change`, `views_list_updated`, `story_step`,
+and others listed in the SDK README) but these have not been tested in
+embedded contexts and are not yet documented here.
 
 The SDK does not expose native Mapbox map events (`moveend`, `zoomend`, etc.)
 to the parent page. For camera-tracking, use polling via

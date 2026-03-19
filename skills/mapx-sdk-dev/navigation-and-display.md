@@ -92,7 +92,8 @@ Hides all MapX UI panels for a clean, full-map view. Good for screenshots,
 presentations, or embedding without the MapX chrome.
 
 ```javascript
-await mapx.ask("set_immersive_mode", { action: "toggle" });
+await mapx.ask("set_immersive_mode", { toggle: true });
+// Or: { enable: true } / { enable: false }
 ```
 
 ## Waiting for the Map

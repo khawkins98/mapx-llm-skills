@@ -33,7 +33,8 @@ Common issues organized by symptom.
 **Symptom**: `set_view_layer_filter_numeric` or `_text` has no visible effect.
 
 - Only works on `vt` (vector tile) views — no effect on raster or cc
-- For numeric: use `from`/`to` params, not the deprecated `value` array
+- For numeric: the `from`/`to`/`attribute` form worked in testing but the
+  SDK source documents a `value` param -- try both if one doesn't work
 - For text: values must exactly match the attribute data (case-sensitive)
 - Call `map_wait_idle()` before applying filters
 - Use `get_view_table_attribute` to verify what values actually exist
@@ -128,14 +129,14 @@ Common issues organized by symptom.
 ## Common Code Mistakes
 
 ```javascript
-// WRONG: wrapper treats [] as falsy, strips parameters
+// WRONG: wrapper omits parameters when they're undefined
 function mapMethod(method, parameters) {
   const opts = { method };
-  if (parameters) opts.parameters = parameters; // [] is falsy!
+  if (parameters) opts.parameters = parameters; // skips when undefined/null
   return mapx.ask("map", opts);
 }
 
-// RIGHT: check for undefined, not truthiness
+// RIGHT: always include parameters when provided
 function mapMethod(method, parameters) {
   const opts = { method };
   if (parameters !== undefined) opts.parameters = parameters;

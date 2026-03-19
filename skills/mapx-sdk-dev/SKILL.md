@@ -12,25 +12,41 @@ description: >
 
 # MapX SDK Development Guide
 
-This skill provides the complete reference for building applications that
-embed MapX maps via the JavaScript SDK.
+This skill is a reference for building applications that embed MapX maps
+via the JavaScript SDK.
+
+## SDK version context
+
+This skill was developed and tested against the deployed MapX SDK at
+`app.mapx.org/sdk/mxsdk.umd.js` (embedded version string **1.13.19**)
+during **March 2026**. The SDK does not pin versions in its UMD URL, so
+the deployed version may change without notice.
+
+The GitHub source on the `main` branch (`@fxi/mxsdk` 1.9.40-alpha.1)
+does not match the deployed build. Where method signatures or behavior
+differ between the source and what was observed at runtime, this skill
+documents the observed behavior and notes the discrepancy.
+
+If a method documented here doesn't work as described, the deployed SDK
+may have changed. Check the [SDK source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
+(note: default branch is `main`, not `master`).
 
 ## What is MapX?
 
-MapX is an open-source geospatial platform managed by UNEP/GRID-Geneva,
-designed for sustainable development and environmental monitoring. The SDK
-allows embedding interactive MapX maps in external websites, with full
-programmatic control over views, layers, navigation, and data.
+MapX is an open-source geospatial platform managed by UNEP/GRID-Geneva
+for sustainable development and environmental monitoring. The SDK allows
+embedding MapX maps in external websites with programmatic control over
+views, layers, navigation, and data.
 
 - Platform: https://app.mapx.org
-- SDK source: https://github.com/unep-grid/mapx/tree/master/app/src/js/sdk
+- SDK source: https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk
 - UMD script: `https://app.mapx.org/sdk/mxsdk.umd.js`
 
 ## Architecture
 
 The SDK uses a **postMessage bridge** pattern:
 
-1. The parent page loads `mxsdk.umd.js` (UMD, ~30KB)
+1. The parent page loads `mxsdk.umd.js` (UMD)
 2. `new mxsdk.Manager({container, url, params})` creates an iframe
 3. The iframe loads the full MapX app for a specific project
 4. All communication is via `window.postMessage` — serialized JSON only
