@@ -142,6 +142,113 @@ The MapX SDK uses a **resolver pattern**:
 - **No `toggle_draw_mode`**: Was removed from the SDK after 2020; even when it existed, it returned only a boolean and couldn't pass drawn geometry back to the parent page
 - **Serialization boundary**: Everything through postMessage must be JSON-serializable
 
+## Making your own Claude Code plugin
+
+If you're thinking about building a skills plugin for another SDK or platform, here's what I learned putting this one together. The plugin system is relatively new (as of March 2026) and the documentation is still catching up, so this may save you some time.
+
+### What's what
+
+Claude Code uses the word "plugin" for the package format and "skill" for the individual pieces of knowledge inside it. A plugin can also contain agents, commands, hooks, and MCP server configs — but skills are the most common thing. A skill is just a markdown file that gets loaded into Claude's context when it's relevant.
+
+### File structure
+
+```
+your-plugin/
+├── .claude-plugin/
+│   ├── plugin.json            # Plugin identity
+│   └── marketplace.json       # Required for discovery — easy to miss
+├── skills/
+│   └── your-skill/
+│       ├── SKILL.md           # Skill definition (frontmatter + instructions)
+│       └── reference-file.md  # Optional supporting docs
+├── agents/                    # Optional
+├── commands/                  # Optional
+└── README.md
+```
+
+The `skills/`, `agents/`, and `commands/` directories go at the repo root, not inside `.claude-plugin/`.
+
+### plugin.json
+
+Minimal version:
+
+```json
+{
+  "name": "your-plugin-name"
+}
+```
+
+The `name` field is the plugin identifier. It shows up in `enabledPlugins` settings and gets used as a namespace for skills (e.g. `/your-plugin-name:skill-name`).
+
+### marketplace.json
+
+This is the file I didn't know I needed. Without it, Claude Code finds your directory but can't resolve the plugins inside it. It goes in `.claude-plugin/` alongside `plugin.json`:
+
+```json
+{
+  "name": "your-marketplace-id",
+  "owner": {
+    "name": "Your Name"
+  },
+  "plugins": [
+    {
+      "name": "your-plugin-name",
+      "source": "./",
+      "description": "What this plugin does",
+      "version": "1.0.0"
+    }
+  ]
+}
+```
+
+The `name` here is the marketplace ID. If your repo is `github.com/you/my-plugin`, a reasonable convention is `you-my-plugin` for the marketplace name. The plugin `name` in the array must match the `name` in your `plugin.json`.
+
+### SKILL.md format
+
+```markdown
+---
+name: your-skill
+description: >
+  When Claude should use this skill. Be specific — this text
+  determines whether the skill gets auto-invoked.
+---
+
+# Your Skill
+
+Instructions and reference material go here. Claude reads this
+when the skill is active.
+```
+
+Set `disable-model-invocation: true` in the frontmatter if the skill should only be triggered manually (via `/plugin-name:skill-name`), not auto-invoked.
+
+### Testing locally
+
+The fastest way to test during development:
+
+```bash
+claude --plugin-dir /path/to/your-plugin
+```
+
+This loads the plugin for a single session without any registration.
+
+### Gotchas I hit
+
+- **marketplace.json is not optional.** Even for a single-plugin repo. Claude Code needs it to resolve plugin names within a marketplace.
+- **Names must align across files.** The plugin `name` in `plugin.json`, the plugin `name` in the `marketplace.json` plugins array, and the reference in `enabledPlugins` settings all need to match.
+- **`--plugin-dir` is your friend.** Use it for quick iteration. Don't bother with marketplace registration until you're ready to share.
+- **Skills go at the repo root.** Putting `skills/` inside `.claude-plugin/` doesn't work — Claude Code won't find them.
+- **The plugin cache can go stale.** If you're changing structure and things aren't updating, check `~/.claude/plugins/cache/` — you may need to clear your plugin's cached copy and `/reload-plugins`.
+
+### Sources
+
+As of March 2026, the plugin system is still evolving. Here's where to find current documentation:
+
+- [Plugins overview](https://code.claude.com/docs/en/plugins) — creating and using plugins
+- [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` and `marketplace.json` schemas
+- [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces) — distribution and registration
+- [claude-plugins-official](https://github.com/anthropics/claude-plugins-official) — Anthropic's official plugins, good structural reference
+- The `plugin-dev` plugin inside the official repo has a skill specifically about plugin authoring
+
 ## Resources
 
 - [MapX Platform](https://app.mapx.org)
