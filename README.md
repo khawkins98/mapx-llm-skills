@@ -1,6 +1,6 @@
 # MapX LLM Skills
 
-Claude Code skills for developing with the [MapX SDK](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), the JavaScript SDK for embedding maps from the [MapX platform](https://app.mapx.org) (UNEP/GRID-Geneva).
+A [Claude Code plugin](https://docs.anthropic.com/en/docs/claude-code/plugins) that provides skills for developing with the [MapX SDK](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), the JavaScript SDK for embedding maps from the [MapX platform](https://app.mapx.org) (UNEP/GRID-Geneva).
 
 ## Background
 
@@ -53,22 +53,58 @@ User-invoked (`/mapx-embed-scaffold`). Generates a starter MapX embed project wi
 
 ## Installation
 
-### As a local plugin (development)
+### Interactive (recommended)
 
-```bash
-# Clone to your projects directory
-cd ~/Documents/git
-git clone https://github.com/khawkins/mapx-llm-skills.git
+From within Claude Code, run:
 
-# Register as a local plugin in Claude Code
-claude plugins add local ./mapx-llm-skills
+```
+/plugin install mapx-llm-skills
 ```
 
-### From GitHub (production)
+If the plugin isn't found in your configured marketplaces, you can point Claude Code at this repo directly:
+
+```
+/plugin marketplace add khawkins98/mapx-llm-skills
+/plugin install mapx-llm-skills@khawkins98-mapx-llm-skills
+```
+
+### Local development
+
+If you've cloned this repo locally, you can load it for a single session:
 
 ```bash
-claude plugins add github khawkins/mapx-llm-skills
+claude --plugin-dir /path/to/mapx-llm-skills
 ```
+
+Or register it as a local marketplace so it's always available:
+
+1. Add an entry to `~/.claude/plugins/known_marketplaces.json`:
+
+```json
+{
+  "khawkins98-mapx-llm-skills": {
+    "source": {
+      "source": "directory",
+      "path": "/path/to/mapx-llm-skills"
+    },
+    "installLocation": "/path/to/mapx-llm-skills"
+  }
+}
+```
+
+2. Enable it in your project's `.claude/settings.json` or user-level `~/.claude/settings.json`:
+
+```json
+{
+  "enabledPlugins": {
+    "mapx-llm-skills@khawkins98-mapx-llm-skills": true
+  }
+}
+```
+
+### Project-level installation
+
+To enable this plugin for all collaborators on a project, add the `enabledPlugins` entry to the project's `.claude/settings.json` and commit it. Each collaborator will still need the marketplace registered on their machine (either via `/plugin marketplace add` or the local directory method above).
 
 ## Technical Details
 
