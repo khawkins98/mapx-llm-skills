@@ -180,9 +180,11 @@ const features = await mapx.ask("map", {
 - Results include Mapbox-internal fields (`layer`, `source`, `sourceLayer`,
   `state`) that are not part of standard GeoJSON. Strip them before exporting:
   ```javascript
-  function toCleanGeoJSON(features) {
+  function cleanFeatures(features) {
     return features.map(({ layer, source, sourceLayer, state, ...rest }) => rest);
   }
+  // Note: returns an array of cleaned feature objects, not a FeatureCollection.
+  // Wrap if needed: { type: "FeatureCollection", features: cleanFeatures(raw) }
   ```
 - Use the Mapbox GL `filter` option to narrow results:
   ```javascript

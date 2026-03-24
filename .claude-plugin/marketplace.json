@@ -1,5 +1,6 @@
 {
   "name": "khawkins98-mapx-llm-skills",
+  "description": "MapX SDK skills for Claude Code — embedding maps, managing views, querying geospatial data",
   "owner": {
     "name": "Ken Hawkins"
   },

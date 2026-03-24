@@ -1,6 +1,5 @@
 ---
 name: mapx-embed-scaffold
-version: 1.0.0
 disable-model-invocation: true
 description: >
   Generate a complete MapX embed project scaffold. Creates HTML, CSS, and
@@ -8,6 +7,14 @@ description: >
   SDK wrappers, and optional features (filtering, custom data, analysis).
   Invoke with a project ID and optional view IDs.
 argument-hint: <project-id> [view-ids...]
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Bash(npm *)
+  - Bash(npx *)
+  - Bash(ls *)
+  - Bash(mkdir *)
 ---
 
 # MapX Embed Scaffold Generator
