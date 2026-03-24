@@ -1,20 +1,24 @@
 # MapX LLM Skills
 
-A [Claude Code plugin](https://docs.anthropic.com/en/docs/claude-code/plugins) that provides skills for developing with the [MapX SDK](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), the JavaScript SDK for embedding maps from the [MapX platform](https://app.mapx.org) (UNEP/GRID-Geneva).
+A [Claude Code plugin](https://code.claude.com/docs/en/plugins) that provides skills for developing with the [MapX SDK](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), the JavaScript SDK for embedding maps from the [MapX platform](https://app.mapx.org) (UNEP/GRID-Geneva).
+
+This is primarily built for [Claude Code](https://code.claude.com), but the skill content is plain markdown with code examples. If you use another AI coding tool that supports loading markdown context files (Cursor rules, Windsurf, Copilot instructions, etc.), you can point it at the files in `skills/mapx-sdk-dev/` to get the same SDK reference material.
 
 ## Background
 
-I built these while working on a [proof-of-concept demo](https://github.com/khawkins/mapx-demo-embed) that embeds MapX maps for disaster risk reduction work at UNDRR. The demo started as a simple iframe embed and grew into something more involved as I dug into the SDK.
+I put these skills together while embedding MapX maps for disaster risk reduction work at UNDRR. The project started as a simple iframe embed and grew more involved as I explored the SDK.
 
-The MapX SDK documentation is mostly in the [GitHub source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk). It's functional but thin. There's no method catalog, no public API for view discovery, and some features only work if you already know the resolver names. I spent a lot of time figuring things out by reading source code and testing, and these skills capture what I learned so the next person doesn't have to repeat it.
+The MapX SDK has [documentation in the GitHub source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), including a README and inline code comments. That said, there are some gaps — there's no standalone method catalog, no public API for view discovery, and some features are easier to find if you already know the resolver names. These skills try to fill in those gaps based on what I've learned from reading the source and testing.
 
-A few examples of the kind of things that tripped me up:
+A few examples of things I had to figure out by experimentation:
 - `view_add` fails silently for views outside the current project (no error, no network request)
-- `toggle_draw_mode` is referenced in wiki examples but was removed from the SDK
+- `toggle_draw_mode` is referenced in older wiki examples but was removed from the SDK
 - The postMessage bridge can't pass callbacks, so click interaction on custom layers needs a coordinate-matching workaround
-- `map_wait_idle()` has to come before dashboard or filter operations, but nothing tells you that
+- `map_wait_idle()` has to come before dashboard or filter operations, but this isn't always obvious from the docs
 
-As of early 2026, MapX doesn't have any LLM skills or AI coding integrations. [Mapbox has some](https://github.com/mapbox/mapbox-agent-skills), so there's precedent for this kind of thing in the geospatial space.
+**A note on accuracy:** I'm relatively new to MapX, and the MapX developers at UNEP/GRID-Geneva will know the platform far better than I do. If you spot something wrong or outdated in these skills, please open an issue — corrections are very welcome.
+
+As of early 2026, MapX doesn't have its own LLM skills or AI coding integrations. [Mapbox has agent skills](https://github.com/mapbox/mapbox-agent-skills) (MapX uses Mapbox GL JS under the hood), so there's precedent for this kind of thing in the geospatial space.
 
 ## Skills
 
@@ -22,7 +26,7 @@ As of early 2026, MapX doesn't have any LLM skills or AI coding integrations. [M
 
 Auto-invoked when working on code that uses the MapX SDK. Provides:
 
-- Method catalog (48+ resolver methods with signatures and return types)
+- Method catalog (30+ resolver methods with signatures and return types)
 - SDK initialization patterns (Manager constructor, singleton, ready event)
 - View management (add/remove, GeoJSON views, Mapbox passthrough, layer ordering)
 - Navigation and display (fly-to, projections, 3D modes, country/region codes)
@@ -53,19 +57,19 @@ User-invoked (`/mapx-embed-scaffold`). Generates a starter MapX embed project wi
 
 ## Installation
 
-### Interactive (recommended)
+### From GitHub (recommended)
 
-From within Claude Code, run:
-
-```
-/plugin install mapx-llm-skills
-```
-
-If the plugin isn't found in your configured marketplaces, you can point Claude Code at this repo directly:
+Inside Claude Code, register this repo as a marketplace and install:
 
 ```
 /plugin marketplace add khawkins98/mapx-llm-skills
 /plugin install mapx-llm-skills@khawkins98-mapx-llm-skills
+```
+
+Or equivalently from the shell:
+
+```bash
+claude plugin install mapx-llm-skills@khawkins98-mapx-llm-skills
 ```
 
 ### Local development
@@ -76,35 +80,32 @@ If you've cloned this repo locally, you can load it for a single session:
 claude --plugin-dir /path/to/mapx-llm-skills
 ```
 
-Or register it as a local marketplace so it's always available:
+Or register it as a local marketplace so it persists:
 
-1. Add an entry to `~/.claude/plugins/known_marketplaces.json`:
-
-```json
-{
-  "khawkins98-mapx-llm-skills": {
-    "source": {
-      "source": "directory",
-      "path": "/path/to/mapx-llm-skills"
-    },
-    "installLocation": "/path/to/mapx-llm-skills"
-  }
-}
+```
+/plugin marketplace add /path/to/mapx-llm-skills
+/plugin install mapx-llm-skills@khawkins98-mapx-llm-skills
 ```
 
-2. Enable it in your project's `.claude/settings.json` or user-level `~/.claude/settings.json`:
+### Team/project configuration
+
+To enable this plugin for all collaborators on a project, add both the marketplace and plugin to the project's `.claude/settings.json` and commit it:
 
 ```json
 {
+  "extraKnownMarketplaces": {
+    "khawkins98-mapx-llm-skills": {
+      "source": {
+        "source": "github",
+        "repo": "khawkins98/mapx-llm-skills"
+      }
+    }
+  },
   "enabledPlugins": {
     "mapx-llm-skills@khawkins98-mapx-llm-skills": true
   }
 }
 ```
-
-### Project-level installation
-
-To enable this plugin for all collaborators on a project, add the `enabledPlugins` entry to the project's `.claude/settings.json` and commit it. Each collaborator will still need the marketplace registered on their machine (either via `/plugin marketplace add` or the local directory method above).
 
 ## Technical Details
 
@@ -247,7 +248,6 @@ As of March 2026, the plugin system is still evolving. Here's where to find curr
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` and `marketplace.json` schemas
 - [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces) — distribution and registration
 - [claude-plugins-official](https://github.com/anthropics/claude-plugins-official) — Anthropic's official plugins, good structural reference
-- The `plugin-dev` plugin inside the official repo has a skill specifically about plugin authoring
 
 ## Resources
 
@@ -255,7 +255,7 @@ As of March 2026, the plugin system is still evolving. Here's where to find curr
 - [MapX SDK Source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
 - [MapX GitHub](https://github.com/unep-grid/mapx)
 - [Mapbox GL JS Docs](https://docs.mapbox.com/mapbox-gl-js/api/) (underlying map engine)
-- [UNDRR Mangrove Component Library](https://unisdr.github.io/undrr-mangrove/) (UI components used in the demo)
+- [Mapbox Agent Skills](https://github.com/mapbox/mapbox-agent-skills) (similar plugin for the Mapbox ecosystem)
 
 ## License
 

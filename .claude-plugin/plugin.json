@@ -5,6 +5,9 @@
   "author": {
     "name": "Ken Hawkins"
   },
+  "homepage": "https://github.com/khawkins98/mapx-llm-skills",
+  "repository": "https://github.com/khawkins98/mapx-llm-skills",
   "license": "MIT",
-  "keywords": ["mapx", "geospatial", "sdk", "maps", "unep", "disaster-risk-reduction", "mapbox-gl", "embed"]
+  "keywords": ["mapx", "geospatial", "sdk", "maps", "unep", "disaster-risk-reduction", "mapbox-gl", "embed"],
+  "skills": "./skills/"
 }

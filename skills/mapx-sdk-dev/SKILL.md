@@ -1,6 +1,5 @@
 ---
 name: mapx-sdk-dev
-version: 1.0.0
 description: >
   Reference skill for developing with the MapX SDK (UNEP/GRID-Geneva).
   Auto-invoked when creating or modifying code that embeds MapX maps,
@@ -8,6 +7,11 @@ description: >
   SDK's postMessage bridge. Covers the full SDK resolver API, the Mapbox
   GL JS passthrough pattern, GeoJSON overlays, filtering, data export,
   and known limitations.
+allowed-tools:
+  - WebFetch(domain:app.mapx.org)
+  - WebFetch(domain:github.com)
+  - WebFetch(domain:raw.githubusercontent.com)
+  - WebFetch(domain:docs.mapbox.com)
 ---
 
 # MapX SDK Development Guide
@@ -44,42 +48,19 @@ views, layers, navigation, and data.
 
 ## Architecture
 
-The SDK uses a **postMessage bridge** pattern:
+The SDK uses a **postMessage bridge**: the parent page loads `mxsdk.umd.js`,
+creates a `Manager` that embeds an iframe, and all communication goes through
+`window.postMessage` as serialized JSON. `mapx.ask("resolver_name", {params})`
+returns Promises. See [initialization.md](initialization.md) for full details.
 
-1. The parent page loads `mxsdk.umd.js` (UMD)
-2. `new mxsdk.Manager({container, url, params})` creates an iframe
-3. The iframe loads the full MapX app for a specific project
-4. All communication is via `window.postMessage` — serialized JSON only
-5. `mapx.ask("resolver_name", {params})` returns Promises
-
-**Critical constraint**: Because everything goes through postMessage,
-you **cannot** pass functions, callbacks, DOM elements, or any
-non-serializable value. This affects click handlers on passthrough
-layers, event listeners, and any pattern requiring a callback.
-
-## SDK Wrapper Pattern
-
-All SDK methods should follow this thin-wrapper pattern:
-
-```javascript
-import { getSDK } from "./client.js";
-
-export function myMethod(param1, param2) {
-  return getSDK().ask("resolver_name", { param1, param2 });
-}
-```
-
-- One function per resolver
-- Pass-through parameters as a plain object
-- Return the Promise directly (let callers await)
-- Group related methods in themed modules (views, filters, ui, etc.)
+**Critical constraint**: You **cannot** pass functions, callbacks, DOM elements,
+or any non-serializable value through the bridge. See
+[limitations-and-workarounds.md](limitations-and-workarounds.md) for workarounds.
 
 ## Reference Files
 
-Detailed documentation is split into focused reference files:
-
-- [sdk-methods.md](sdk-methods.md) — Complete resolver catalog with signatures, return types, and usage notes
-- [initialization.md](initialization.md) — Manager constructor options, project setup, iframe configuration
+- [sdk-methods.md](sdk-methods.md) — Resolver catalog with signatures, return types, and usage notes
+- [initialization.md](initialization.md) — Manager constructor, project setup, iframe configuration
 - [views-and-layers.md](views-and-layers.md) — View lifecycle, GeoJSON views, Mapbox passthrough, layer ordering
 - [navigation-and-display.md](navigation-and-display.md) — Camera control, projections, 3D modes, country navigation
 - [filtering-and-data.md](filtering-and-data.md) — Numeric/text filters, transparency, data introspection, export
@@ -87,23 +68,9 @@ Detailed documentation is split into focused reference files:
 - [limitations-and-workarounds.md](limitations-and-workarounds.md) — Cross-project views, event limitations, click fallbacks, known quirks
 - [troubleshooting.md](troubleshooting.md) — Common issues organized by symptom
 
-## Quick Reference: View Types
+## Key Rules
 
-| Code | Name | Queryable | Filterable | Has Legend | Dashboard |
-|------|------|-----------|------------|-----------|-----------|
-| `vt` | Vector Tiles | Yes | Yes (numeric + text) | Yes | Sometimes |
-| `rt` | Raster Tiles | No | No | Yes | No |
-| `cc` | Custom Coded | No | No | Varies | Sometimes |
-| `sm` | Story Map | N/A | N/A | N/A | N/A |
-
-## Verification Checklist
-
-When building a MapX embed, verify:
-
-- [ ] SDK script tag loads before your module: `<script src="https://app.mapx.org/sdk/mxsdk.umd.js"></script>`
-- [ ] Container element exists in DOM before `initSDK()` is called
-- [ ] Project ID is valid and the project contains the views you need
-- [ ] `mapx.on("ready", ...)` fires before making any SDK calls
-- [ ] View IDs belong to the connected project (cross-project calls fail silently)
-- [ ] `map_wait_idle()` is called before dashboard/filter operations
-- [ ] Custom GeoJSON data is registered locally for click matching if using passthrough
+- Always wait for the `ready` event before making SDK calls
+- Call `map_wait_idle()` before dashboard/filter/data operations
+- View IDs must belong to the connected project (cross-project calls fail silently)
+- View types and their capabilities are documented in [views-and-layers.md](views-and-layers.md)
