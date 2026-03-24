@@ -100,8 +100,12 @@ function findNearestFeature(clickLng, clickLat, features, tolerance = 0.5) {
 }
 
 // For polygons: ray-casting point-in-polygon test
-// Note: handles Polygon geometry only. For MultiPolygon, iterate over
-// each polygon in geometry.coordinates and test each one.
+// Limitations:
+// - Only checks the outer ring (polygon[0]). Points inside holes
+//   (interior rings) will incorrectly return true. To handle holes,
+//   check the outer ring, then exclude if inside any subsequent ring.
+// - Handles Polygon geometry only. For MultiPolygon, iterate over
+//   each polygon in geometry.coordinates and test each one.
 function pointInPolygon(point, polygon) {
   const [x, y] = point;
   let inside = false;
