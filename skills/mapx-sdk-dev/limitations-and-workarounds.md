@@ -318,3 +318,56 @@ function computeLocalStats(features, attribute) {
   return { count: values.length, categories: counts };
 }
 ```
+
+## 11. MapX REST API requires authentication
+
+**Problem**: MapX has a REST API at `app.mapx.org/get/...` but all
+view-listing and search endpoints require authentication parameters
+(`idUser`, `idProject`, `token`). There is no public/anonymous access.
+
+> *Evidence*: Tested April 2026. The API source is at
+> `github.com/unep-grid/mapx/tree/main/api`. Route definitions are in
+> `api/index.js`. The endpoint `/get/views/list/global/public/` exists
+> and returns HTTP 200, but responds with
+> `{"type":"error","message":"Missing parameter: [\"idUser\",\"idProject\",\"token\"]"}`.
+> The `/get/search/key` endpoint returns 404 without auth.
+
+**Known API routes** (from source inspection, all require auth):
+
+| Route | Method | Purpose |
+|---|---|---|
+| `/get/view/item/:id` | GET | Single view details |
+| `/get/views/list/project/` | GET/POST | Views in a project |
+| `/get/views/list/global/public/` | POST | Public views (needs idUser, idProject, token) |
+| `/get/search/key` | GET | Keyword search |
+| `/get/source/summary/` | GET | Source data summary |
+| `/get/source/table/attribute/` | GET | Attribute table |
+
+**Workaround**: Use the SDK's `get_views` method through the iframe,
+which authenticates automatically via the MapX app session. To dump a
+full project catalogue programmatically, load the SDK in a headless
+browser (Playwright), wait for `ready`, and call `get_views`:
+
+```javascript
+// In a Playwright test or script:
+await page.setContent(`
+  <div id="c"></div>
+  <script src="https://app.mapx.org/sdk/mxsdk.umd.js"></script>
+  <script>
+    const mgr = new mxsdk.Manager({
+      container: document.getElementById("c"),
+      url: "https://app.mapx.org/?project=MX-PROJECT-ID&language=en",
+      style: { width: "1px", height: "1px", border: "none" },
+    });
+    mgr.on("ready", async () => {
+      window._views = await mgr.ask("get_views");
+      window._done = true;
+    });
+  </script>
+`);
+await page.waitForFunction(() => window._done, { timeout: 90000 });
+const views = await page.evaluate(() => window._views);
+// views = [{id, type, data: {title: {en: "..."}, abstract: {en: "..."}}}, ...]
+```
+
+This is the only reliable way to enumerate views without API credentials.
