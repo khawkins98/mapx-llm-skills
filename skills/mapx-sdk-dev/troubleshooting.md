@@ -13,6 +13,21 @@ Common issues organized by symptom.
 - Verify the project ID is valid (visit the URL directly in a browser)
 - Ensure you're not calling `new mxsdk.Manager()` more than once
 
+**Symptom**: `ready` never fires in headless Chromium (Playwright/Puppeteer).
+
+- MapX requires WebGL to render the map. Headless Chromium doesn't
+  provide a real GPU context, so the MapX app inside the iframe never
+  finishes initializing and `ready` never fires.
+- **Fix**: use `headless: false` (headed mode). The browser window can
+  be off-screen or minimized, but it needs a real rendering context.
+- The SDK script loads fine in headless (you can verify `typeof mxsdk`
+  is `"object"`), and the Manager is created, but the iframe app stalls.
+
+> *Evidence*: Tested April 2026 with Playwright 1.58 on macOS. In
+> headless mode, `window._status` stayed at "manager created" for 90s
+> before timeout. Switching to `headless: false` with the same code
+> produced `ready` in ~4 seconds and returned 85 views.
+
 **Symptom**: `ready` fires but SDK calls hang or timeout.
 
 - MapX app may still be loading views — call `map_wait_idle()` first

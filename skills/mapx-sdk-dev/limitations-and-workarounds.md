@@ -370,4 +370,76 @@ const views = await page.evaluate(() => window._views);
 // views = [{id, type, data: {title: {en: "..."}, abstract: {en: "..."}}}, ...]
 ```
 
-This is the only reliable way to enumerate views without API credentials.
+**Important**: headless Chromium does not fire the `ready` event because
+MapX needs WebGL to render the map. Use `headless: false` (headed mode)
+for Playwright probes. See [troubleshooting.md](troubleshooting.md)
+"SDK ready event never fires in headless browsers."
+
+This is the only reliable way to enumerate views within a single project
+without API credentials.
+
+## 12. MeiliSearch catalogue API (cross-project search)
+
+MapX exposes a [MeiliSearch](https://www.meilisearch.com/) index at
+`search.mapx.org` that covers all public views across all projects.
+This is the only way to search the full ~2,100-view catalogue without
+probing projects one by one.
+
+> *Evidence*: Tested April 2026. The index `views_en` returns view IDs,
+> titles, project IDs, and abstracts. Requires an API key passed via
+> the `X-Meili-API-Key` header. A key can be obtained from the MapX
+> team (contact Pierre at GRID-Geneva).
+
+**Endpoint**: `POST https://search.mapx.org:443/indexes/views_en/search`
+
+**Headers**: `X-Meili-API-Key: <your-key>`, `Content-Type: application/json`
+
+**Body**: `{"q": "search terms", "limit": 20}`
+
+```javascript
+const https = require("https");
+
+function searchMapX(query, apiKey, limit = 20) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({ q: query, limit });
+    const req = https.request({
+      hostname: "search.mapx.org",
+      port: 443,
+      path: "/indexes/views_en/search",
+      method: "POST",
+      headers: {
+        "X-Meili-API-Key": apiKey,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = "";
+      res.on("data", (c) => data += c);
+      res.on("end", () => {
+        try { resolve(JSON.parse(data)); }
+        catch (e) { reject(e); }
+      });
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+const result = await searchMapX("flood hazard", API_KEY);
+// result.hits = [{view_id, title, project_id, ...}, ...]
+```
+
+**Response shape** (per hit):
+
+- `view_id` -- MapX view ID (e.g. `MX-V07LO-829XA-4BIZ8`)
+- `title` -- English title
+- `project_id` -- which MapX project hosts this view
+- `abstract` -- description text (may contain HTML)
+
+Other language indexes may be available (e.g. `views_fr`). The
+`views_en` index is the most complete.
+
+**When to use this vs SDK probe**:
+- MeiliSearch: searching for a dataset by keyword across all projects
+- SDK `get_views`: dumping the full catalogue of a specific project

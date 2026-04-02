@@ -45,6 +45,7 @@ views, layers, navigation, and data.
 - Platform: https://app.mapx.org
 - SDK source: https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk
 - UMD script: `https://app.mapx.org/sdk/mxsdk.umd.js`
+- Catalogue search: `search.mapx.org` (MeiliSearch, requires API key -- see limitations §12)
 
 ## Architecture
 
@@ -65,7 +66,7 @@ or any non-serializable value through the bridge. See
 - [navigation-and-display.md](navigation-and-display.md) — Camera control, projections, 3D modes, country navigation
 - [filtering-and-data.md](filtering-and-data.md) — Numeric/text filters, transparency, data introspection, export
 - [ui-and-modals.md](ui-and-modals.md) — Language, themes, dashboards, modals, vector highlight
-- [limitations-and-workarounds.md](limitations-and-workarounds.md) — Cross-project views, event limitations, click fallbacks, known quirks
+- [limitations-and-workarounds.md](limitations-and-workarounds.md) — Cross-project views, event limitations, click fallbacks, REST API auth, MeiliSearch catalogue API
 - [troubleshooting.md](troubleshooting.md) — Common issues organized by symptom
 
 ## Key Rules
