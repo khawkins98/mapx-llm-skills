@@ -9,7 +9,7 @@
       "name": "mapx-llm-skills",
       "source": "./",
       "description": "Skills for developing with the MapX SDK — embedding interactive geospatial maps, managing views, querying data, and building map-powered applications",
-      "version": "1.0.0"
+      "version": "1.1.0"
     }
   ]
 }

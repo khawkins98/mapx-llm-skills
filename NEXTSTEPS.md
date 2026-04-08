@@ -90,7 +90,7 @@
 
 ## Plugin conventions (inspired by mapbox-agent-skills)
 
-- [x] **Add `"skills": "./skills/"` to plugin.json** — done.
+- [x] **Add `"skills": "./skills/"` to plugin.json** — added then removed. Claude Code rejects it with a validation error; Copilot CLI defaults to `skills/` when the field is absent. The field must be omitted for dual compatibility.
 
 - [x] **Add `homepage` and `repository` fields to plugin.json** — done.
 

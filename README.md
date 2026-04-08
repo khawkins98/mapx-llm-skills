@@ -1,8 +1,6 @@
 # MapX LLM Skills
 
-A [Claude Code plugin](https://code.claude.com/docs/en/plugins) that provides skills for developing with the [MapX SDK](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), the JavaScript SDK for embedding maps from the [MapX platform](https://app.mapx.org) (UNEP/GRID-Geneva).
-
-This is primarily built for [Claude Code](https://code.claude.com), but the skill content is plain markdown with code examples. If you use another AI coding tool that supports loading markdown context files (Cursor rules, Windsurf, Copilot instructions, etc.), you can point it at the files in `skills/mapx-sdk-dev/` to get the same SDK reference material.
+Skills for developing with the [MapX SDK](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), the JavaScript SDK for embedding maps from the [MapX platform](https://app.mapx.org) (UNEP/GRID-Geneva). Installable as a plugin in both [Claude Code](https://code.claude.com/docs/en/plugins) and [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli).
 
 ## Background
 
@@ -24,7 +22,12 @@ As of early 2026, MapX doesn't have its own LLM skills or AI coding integrations
 
 ### `mapx-sdk-dev` — SDK Development Reference
 
-Auto-invoked when working on code that uses the MapX SDK. Provides:
+Both tools auto-detect this skill when working on MapX SDK code. You can also invoke it explicitly:
+
+- **Claude Code:** `/mapx-llm-skills:mapx-sdk-dev`
+- **Copilot CLI:** include `/mapx-sdk-dev` in your prompt
+
+Provides:
 
 - Method catalog (30+ resolver methods with signatures and return types)
 - SDK initialization patterns (Manager constructor, singleton, ready event)
@@ -43,7 +46,7 @@ Auto-invoked when working on code that uses the MapX SDK. Provides:
 
 ### `mapx-embed-scaffold` — Project Scaffolding
 
-User-invoked (`/mapx-embed-scaffold`). Generates a starter MapX embed project with:
+User-invoked. Generates a starter MapX embed project with:
 
 - HTML + CSS sidebar/map layout
 - Vite dev server and build configuration
@@ -51,45 +54,35 @@ User-invoked (`/mapx-embed-scaffold`). Generates a starter MapX embed project wi
 - State management (openViews tracking)
 - View toggle buttons with active state
 
-```
-/mapx-embed-scaffold MX-2LD-FBB-58N-ROK-8RH
-```
+Invoke explicitly:
+
+- **Claude Code:** `/mapx-llm-skills:mapx-embed-scaffold MX-2LD-FBB-58N-ROK-8RH`
+- **Copilot CLI:** include `/mapx-embed-scaffold MX-2LD-FBB-58N-ROK-8RH` in your prompt
 
 ## Installation
 
-### From GitHub (recommended)
+### Claude Code
 
-Inside Claude Code, register this repo as a marketplace and install:
+**From GitHub (recommended):**
 
 ```
 /plugin marketplace add khawkins98/mapx-llm-skills
 /plugin install mapx-llm-skills@khawkins98-mapx-llm-skills
 ```
 
-Or equivalently from the shell:
+Or from the shell:
 
 ```bash
 claude plugin install mapx-llm-skills@khawkins98-mapx-llm-skills
 ```
 
-### Local development
-
-If you've cloned this repo locally, you can load it for a single session:
+**Local clone:**
 
 ```bash
 claude --plugin-dir /path/to/mapx-llm-skills
 ```
 
-Or register it as a local marketplace so it persists:
-
-```
-/plugin marketplace add /path/to/mapx-llm-skills
-/plugin install mapx-llm-skills@khawkins98-mapx-llm-skills
-```
-
-### Team/project configuration
-
-To enable this plugin for all collaborators on a project, add both the marketplace and plugin to the project's `.claude/settings.json` and commit it:
+**Team/project configuration** — commit to `.claude/settings.json`:
 
 ```json
 {
@@ -106,6 +99,47 @@ To enable this plugin for all collaborators on a project, add both the marketpla
   }
 }
 ```
+
+### GitHub Copilot CLI
+
+**Install from a local clone:**
+
+```bash
+copilot plugin install /path/to/mapx-llm-skills
+```
+
+**Install directly from GitHub** (no local clone needed):
+
+```bash
+copilot plugin install khawkins98/mapx-llm-skills
+```
+
+**Verify the install:**
+
+```bash
+copilot plugin list
+```
+
+Or inside an interactive session:
+
+```
+/skills list
+```
+
+## Development
+
+If you're working on the skill content in this repo:
+
+1. **Clone the repo** and make your changes to the Markdown files under `skills/`.
+
+2. **Test locally**:
+   - Claude Code: load directly from your working copy with `claude --plugin-dir ./`
+   - Copilot CLI: install from your local repo with `copilot plugin install ./` (it caches locally, so re-run after each edit unless you use `/skills reload`)
+
+3. **Iterate** — edit skill files and verify the skills activate and produce correct output.
+   - In Copilot CLI you can also run `/skills reload` during a session after editing a skill instead of reinstalling immediately.
+
+4. **Publish** — push to the repo. To pick up changes in Copilot CLI after a pull: `copilot plugin install /path/to/repo` (re-run install to refresh the cache).
 
 ## Technical Details
 
