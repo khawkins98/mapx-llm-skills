@@ -132,12 +132,12 @@ If you're working on the skill content in this repo:
 
 1. **Clone the repo** and make your changes to the Markdown files under `skills/`.
 
-2. **Test locally** — load directly from your working copy without an install step:
-   - Claude Code: `claude --plugin-dir ./`
-   - Copilot CLI: `copilot plugin install ./` (caches locally; re-run after each edit)
+2. **Test locally**:
+   - Claude Code: load directly from your working copy with `claude --plugin-dir ./`
+   - Copilot CLI: install from your local repo with `copilot plugin install ./` (it caches locally, so re-run after each edit unless you use `/skills reload`)
 
 3. **Iterate** — edit skill files and verify the skills activate and produce correct output.
-   - In Copilot CLI you can also run `/skills reload` during a session after editing a skill.
+   - In Copilot CLI you can also run `/skills reload` during a session after editing a skill instead of reinstalling immediately.
 
 4. **Publish** — push to the repo. To pick up changes in Copilot CLI after a pull: `copilot plugin install /path/to/repo` (re-run install to refresh the cache).
 
