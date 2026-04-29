@@ -385,6 +385,28 @@ await mapx.ask("set_vector_highlight", { enable: true });
 // Optional parameters: nLayers (number), calcArea (boolean)
 ```
 
+### set_features_click_sdk_only
+
+Redirect `click_attributes` events exclusively to the SDK listener, suppressing
+MapX's own native feature popup. Use this when building a custom inspection panel.
+
+```javascript
+// Suppress MapX's feature panel so only your listener receives click_attributes
+mapx.ask("set_features_click_sdk_only", { enable: true }).catch(() => {});
+
+// Restore default MapX behavior on deactivation
+mapx.ask("set_features_click_sdk_only", { enable: false }).catch(() => {});
+```
+
+**Important:** Fire-and-forget — do **not** `await` this call. The SDK `ask()` can
+sometimes hang if the internal resolver throws (see §9 in
+[limitations-and-workarounds.md](limitations-and-workarounds.md)). The UI should
+not depend on the response. Appending `.catch(() => {})` prevents unhandled rejection
+warnings.
+
+Note: Initialising MapX with `closePanels: true` typically already suppresses the
+native feature panel. Calling this method in inspection mode is belt-and-suspenders.
+
 ### set_panel_left_visibility
 
 Show or hide the MapX left panel (view list sidebar).
@@ -497,12 +519,30 @@ mapx.on("ready", () => {
 });
 
 mapx.on("click_attributes", (data) => {
-  // User clicked a feature
-  // data.attributes: array of feature property objects
-  // Only fires for MapX-managed views, NOT passthrough layers
-  // The event payload also appears to include click coordinates,
-  // which the coordinate matching workaround relies on, but the
-  // exact payload shape is not fully documented here.
+  // Fires ONCE PER OPEN VT VIEW per map click (one event per active vector-tile view,
+  // NOT once per click). Raster (rt) and custom-coded (cc) views do NOT fire this event.
+  //
+  // CONFIRMED payload shape (from MapX source app/src/js/map_helpers/index.js):
+  // {
+  //   part:       number,       // 1-indexed position of this event in the batch
+  //   nPart:      number,       // total events expected (= number of open VT views)
+  //   idView:     string,       // MapX view ID that this event is for
+  //   attributes: [],           // array of feature attribute objects at click point
+  //                             //   empty array [] if no VT feature was hit (NOT absent)
+  //   point:      { x, y },    // pixel coordinates (Mapbox GL Point object)
+  //   lngLat:     { lng, lat } // geographic coordinates (ALWAYS present)
+  // }
+  //
+  // BATCHING PATTERN: Collect events until parts.size === nPart to have all views:
+  //   const batch = new Map();
+  //   function handleClick({ part, nPart, idView, attributes, lngLat }) {
+  //     if (part === 1) batch.clear();          // new click, reset
+  //     batch.set(idView, attributes);
+  //     if (batch.size === nPart) renderAll(batch, lngLat);
+  //   }
+  //
+  // IMPORTANT: If only RT layers are open, nPart === 0 and this event NEVER fires,
+  // meaning geographic coordinates are unavailable from this event alone.
 });
 ```
 

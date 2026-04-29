@@ -127,9 +127,10 @@
 
 ## Prompt and code quality fixes
 
-- [ ] **Document `click_attributes` payload shape** — the event payload
-      description is too vague for an LLM to extract coordinates. Add at
-      minimum the property names for coordinates (e.g., `point`, `lngLat`).
+- [x] **Document `click_attributes` payload shape** — confirmed from MapX source
+      (`app/src/js/map_helpers/index.js`). The event fires **once per open VT view**
+      per click with `{part, nPart, idView, attributes, point, lngLat}`. Batch-collect
+      until `parts.size === nPart`. Updated in sdk-methods.md Events section.
 
 - [ ] **Add concrete numeric filter fallback example** — the dual-parameter
       ambiguity (`from`/`to` vs `value`) needs a commented-out alternative
