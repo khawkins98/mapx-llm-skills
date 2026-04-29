@@ -12,6 +12,19 @@ styled layer with metadata, access control, and optional dashboards.
 | `cc` | Custom Coded | Dynamic/real-time views | JavaScript + API feeds |
 | `sm` | Story Map | Narrative presentations | Step-by-step map navigation |
 
+> **Note — "raster-as-VT"**: Some views carry type `rt` in MapX metadata
+> but are physically stored as vector tiles with a single `GRAY_INDEX`
+> property (the pixel value). These views **do** fire `click_attributes`
+> and contribute to `nPart` exactly like `vt` views. Use `nPart` / batch
+> membership as the definitive signal of queryability, not the type code.
+> A `GRAY_INDEX` of `-3.4028234663852886e38` is the float32 GDAL "no data"
+> sentinel.
+>
+> Country-level indicator data (e.g. AAL, PML, fiscal gap) is typically
+> stored as `vt` point geometry (country centroids), even when the semantic
+> subject feels like "raster statistics". Always verify by observing the
+> rendered geometry, not by assuming from the type field.
+
 ## View Lifecycle
 
 ```

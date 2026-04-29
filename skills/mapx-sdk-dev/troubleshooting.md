@@ -65,14 +65,21 @@ Common issues organized by symptom.
 
 - Ensure `set_vector_highlight({enable: true})` is called after ready
 - Only fires for MapX-managed views (not Mapbox passthrough layers)
-- Check that the view is actually a vector type (`vt`) — raster clicks
-  don't produce feature attributes
+- Check that the view is actually a vector type (`vt`) — **true raster tile**
+  views (gridded imagery) don't produce feature attributes; however, some
+  views typed as `rt` in the MapX metadata are actually stored internally
+  as vector tiles with a single `GRAY_INDEX` attribute (the pixel value)
+  and **do** fire `click_attributes`. Treat `nPart` / batch count as the
+  definitive signal of queryability — not the view type code.
 
 **Symptom**: Click events fire but `data.attributes` is empty.
 
 - Some views don't have attribute data attached to their features
 - For GeoJSON views, the click may hit the view but the properties
   weren't included in the GeoJSON data
+- A `GRAY_INDEX` value of `-3.4028234663852886e38` is the float32
+  GDAL/MapX "no data" sentinel — treat this as missing data, not a
+  real pixel value
 
 ## Custom Layers Don't Appear
 
