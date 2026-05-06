@@ -39,6 +39,7 @@ Common issues organized by symptom.
 
 - **Most common cause**: The view ID belongs to a different project.
   Cross-project `view_add` fails silently.
+  See [Limitation §1: Cross-Project View Scope](limitations-and-workarounds.md#1-cross-project-view-scope).
 - Verify the view ID is correct (check for typos in the MX-XXXXX format)
 - Use `get_views()` to list all views in the current project
 - Check that the view hasn't been unpublished or deleted from MapX
