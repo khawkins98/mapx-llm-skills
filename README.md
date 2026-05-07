@@ -61,6 +61,8 @@ Invoke explicitly:
 
 ## Installation
 
+> Before installing, see [Limitations and workarounds](skills/mapx-sdk-dev/limitations-and-workarounds.md) for known SDK quirks (cross-project view scope, missing native events, raster query limits, REST/MeiliSearch auth).
+
 ### Claude Code
 
 **From GitHub (recommended):**
