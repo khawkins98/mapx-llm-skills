@@ -55,7 +55,7 @@ also exercises a remotely-fetched (cross-project) view.
 
 | Behaviour | Static | App |
 |---|---|---|
-| `ready` (headless, from localhost) | ~4.2 s | ~3.6 s |
+| `ready` (headless, from localhost) | ~4–4.5 s | ~3.6–10 s (varies run to run) |
 | Public view from another project: `view_add` | `true`, `view_added`, visible | same |
 | Bogus view ID: `view_add` | hangs, `err_resolver_failed` "View not found" | same |
 | Already-open view: `view_add` | `true`, `view_added` fires again | same |
@@ -80,7 +80,7 @@ also exercises a remotely-fetched (cross-project) view.
 | Time filter `{from, to}` only | applied | ignored (slider needs `value`) |
 | Transparency `{value: 50}` | no opacity set (50 rejected) | opacity 0.5 |
 | Transparency `{value: 50, opacity: 0.5}` | opacity 0.5 | opacity 0.5 |
-| `set_project` | hangs (`err_resolver_not_found`) | public, no views open: `true` ~1.3 s; with views open: switched, promise pending, no `project_changed`; inaccessible: blocks on "project cannot be loaded" dialog |
+| `set_project` | hangs (`err_resolver_not_found`) | public, no views open: `true` ~1 s; with views open: **intermittent** (one run `true`, one run switched but never settled); inaccessible: blocks on "project cannot be loaded" dialog |
 | Inaccessible project in `project=` URL | loads HOME silently | loads HOME silently |
 
 ## Staging, 2026-09-28 (1.14.1-alpha.17)
@@ -89,7 +89,7 @@ Same checks against `app.staging.mapx.org`. Changes from prod:
 
 - Failed and unknown resolvers **reject** with a `MapxSdkError` (e.g. `No resolver for 'get_views_id_open'. Use 'get_sdk_methods' to list available…`); the default `requestTimeoutMs` is 120 s.
 - Over the request limit: rejected with `Too many SDK requests (10/10)` (an `Error` object), and the request is **not** executed. The limit is now exactly 10.
-- `set_project` to a public project resolves `true` in ~1.8 s and fires `project_changed`, even with views open.
+- `set_project` to a public project resolves `true` in ~1.8 s and fires `project_changed`, with or without views open, in every run.
 
 Unchanged on staging: the 10 s `map_fly_to` cap (a 12 s flight now *rejects* `timeout` instead of hanging), the per-mode filter and transparency parameters, app-mode slider snapping, `get_sdk_methods` without `panels_*`, the silent HOME fallback for an inaccessible `project=`, `set_project` to an inaccessible project still pending after 20 s, and filter setters on a view that isn't loaded resolving `undefined` with `err_view_invalid`. The text-filter view `MX-1QXAR-BQIQ6-2C685` doesn't exist in the staging database (API 204), so the text checks didn't run there; the code is identical to prod.
 

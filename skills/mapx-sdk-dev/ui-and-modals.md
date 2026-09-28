@@ -59,9 +59,10 @@ await mapx.ask("set_dashboard_visibility", { show: false });
 await mapx.ask("set_dashboard_visibility", { toggle: true });
 ```
 
-**Important**: Always call `map_wait_idle()` before checking `has_dashboard()`
-or opening a dashboard. The dashboard state depends on which views are
-loaded and rendered.
+**Important**: check `has_dashboard()` only after the view is fully added,
+i.e. after `view_add` resolves `true` or its `view_added` event fires. The
+dashboard is built before `view_added`. `map_wait_idle()` does **not** wait
+for views.
 
 ## Map Composer
 

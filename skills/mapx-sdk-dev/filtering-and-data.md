@@ -117,7 +117,8 @@ await mapx.ask("set_view_layer_transparency", {
   opacity: 1 - transparency / 100, // static mode (0..1 opacity)
 });
 
-// Read current (returns the stored value; in static mode that's the 0..1 opacity)
+// Read current: returns stored OPACITY (0..1), not transparency.
+// In static mode it echoes whatever number was last passed.
 const t = await mapx.ask("get_view_layer_transparency", {
   idView: "MX-XXXXX",
 });
@@ -157,8 +158,8 @@ const summary = await mapx.ask("get_view_source_summary", {
   idAttr: "population",       // optional: specific attribute
   stats: ["base", "attributes"],
 });
-// Base: { count, min, max, mean }
-// Attributes: category distributions, histograms
+// => { attributes, attributes_types, row_count,
+//      attribute_stat: { attribute, min, max, ... }, extent_sp, ... }
 ```
 
 ## Data Export
@@ -166,7 +167,7 @@ const summary = await mapx.ask("get_view_source_summary", {
 `download_view_source_geojson` is intended for GeoJSON views created via
 `view_geojson_create`. For native views, the SDK provides
 `download_view_source_vector` and `download_view_source_external`
-(not yet documented in this skill).
+(see [sdk-methods.md](sdk-methods.md#download_view_source_vector--download_view_source_external--download_view_source_raster)).
 
 ```javascript
 const geojson = await mapx.ask("download_view_source_geojson", {

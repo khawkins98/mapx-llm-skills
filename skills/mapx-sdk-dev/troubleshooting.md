@@ -161,8 +161,8 @@ Common issues organized by symptom.
 - Check the method exists: `await mapx.ask("get_sdk_methods")` (omits `panels_*`)
 - Check that `ready` has fired before calling `ask()`
 - Check browser console for iframe errors or postMessage failures
-- For `get_view_source_summary` on `rt` views, the WMS call has a 20s
-  internal timeout — it will eventually return, but may be slow
+- For `get_view_source_summary` on `rt` views, the WMS call can be slow
+  and can throw, which makes the call hang; use `askWithTimeout`
 
 ## Performance Issues
 
@@ -207,14 +207,14 @@ mapx.on("ready", async () => {
   await mapx.ask("view_add", { idView: "..." });
 });
 
-// WRONG: querying before idle
-await mapx.ask("view_add", { idView: "..." });
-const summary = await mapx.ask("get_view_source_summary", { ... }); // Stale!
+// WRONG: assuming map_wait_idle waits for a view to load
+await mapx.ask("view_add", { idView });
+await mapx.ask("map_wait_idle"); // resolves immediately if the camera isn't moving
+await mapx.ask("has_dashboard"); // may run before the view's dashboard exists
 
-// RIGHT: wait for idle
-await mapx.ask("view_add", { idView: "..." });
-await mapx.ask("map_wait_idle");
-const summary = await mapx.ask("get_view_source_summary", { ... });
+// RIGHT: view_add resolves true once the view is fully added (view_added fires too)
+const ok = await mapx.ask("view_add", { idView });
+if (ok === true) await mapx.ask("has_dashboard");
 
 // WRONG: removing source before layers
 await mapx.ask("map", { method: "removeSource", parameters: ["src"] }); // Error!

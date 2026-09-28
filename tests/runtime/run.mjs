@@ -328,6 +328,17 @@ async function runMode(browser, mode) {
   await step("viewAddCrossProject", () => checkViewAddCrossProject(b.page, reqB));
   await step("setProject", () => checkSetProject(b.page));
   await b.page.close();
+
+  // Session C: fresh ECO-DRR session, set_project with no views open
+  const c = await openSession(browser, { project: FX.projectEco, isStatic }, []);
+  await step("setProjectNoViews", () => ev(c.page, async (p) => {
+    const t0 = H.now();
+    const r = await H.ask("set_project", { idProject: p }, 30000);
+    const changed = await H.waitEvent("project_changed", null, t0, 3000);
+    const cur = await H.ask("get_project", {}, 5000);
+    return { status: r.status, value: r.value, error: r.error, ms: r.ms, project_changed: changed, currentProject: cur.value ?? cur.status };
+  }, FX.projectHome));
+  await c.page.close();
   return results;
 }
 

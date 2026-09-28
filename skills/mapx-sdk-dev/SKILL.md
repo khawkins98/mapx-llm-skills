@@ -41,6 +41,14 @@ URLs, so the deployed version may change without notice. The npm package
 The SDK is developed in the `unep-grid/mapx` repository on GitHub (`main`
 branch) under `app/src/js/sdk`.
 
+**Coming in the next release** (seen on `staging` 1.14.1-alpha.17,
+runtime-checked 2026-09-28): failed or unknown resolvers **reject** with a
+`MapxSdkError` instead of hanging, the Manager gets a `requestTimeoutMs`
+option (default 120 s), and a call over `maxSimultaneousRequest` is rejected
+with an `Error` and **not** executed. Code that guards calls with
+`askWithTimeout` works on both. Check the deployed version with
+`mapx.version`, and don't rely on the prod-only hang behaviour.
+
 **Map engine**: MapX switched from Mapbox GL JS v2 to **MapLibre GL JS v5**
 in April 2026 (shipped in 1.14). Passthrough (`"map"` resolver) calls must use
 MapLibre v5 signatures. Most camera/source/layer calls are unchanged, but

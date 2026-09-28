@@ -55,8 +55,9 @@ project-root/
 1. **SDK wrappers are thin**: One function per resolver, returns the
    Promise directly. Group by theme (views, filters, ui, map-control).
 
-2. **State lives in store.js**: Track openViews as a `Set`, custom data
-   in an array registry. Use setter functions for live module bindings.
+2. **State lives in store.js**: Track `openViews` as a `Set`, updated only
+   from SDK events. Add further shared state (e.g. a custom-data registry)
+   there as the project grows.
 
 3. **UI modules are self-contained**: Each module owns its DOM elements
    and event listeners. Import SDK wrappers and store, export an

@@ -1,7 +1,7 @@
 {
   "mode": "app",
-  "startedAt": "2026-09-28T14:53:46.169Z",
-  "readyMs": 4901,
+  "startedAt": "2026-09-28T15:15:49.636Z",
+  "readyMs": 3519,
   "landedProjectA": "MX-YBJ-YYF-08R-UUR-QW6",
   "basics": {
     "version": "1.14.1-alpha.17",
@@ -24,7 +24,7 @@
     "setProjection_object": {
       "status": "resolved",
       "value": true,
-      "ms": 2750,
+      "ms": 998,
       "messages": [],
       "events": []
     },
@@ -33,21 +33,21 @@
       "value": {
         "type": "mercator"
       },
-      "ms": 453,
+      "ms": 218,
       "messages": [],
       "events": []
     },
     "setProjection_string": {
       "status": "resolved",
       "value": true,
-      "ms": 289,
+      "ms": 124,
       "messages": [],
       "events": []
     },
     "getProjection_after_string": {
       "status": "resolved",
       "value": "mercator",
-      "ms": 178,
+      "ms": 104,
       "messages": [],
       "events": []
     },
@@ -80,7 +80,7 @@
       "status": "rejected",
       "error": "No resolver for 'definitely_not_a_resolver'. Use 'get_sdk_methods' to list available methods'",
       "errorType": "object",
-      "ms": 1,
+      "ms": 0,
       "messages": [],
       "events": []
     },
@@ -94,7 +94,7 @@
       "status": "rejected",
       "error": "Resolver failed ( idResolver =  map_fly_to, idRequest = 23, msg = timeout) ",
       "errorType": "object",
-      "ms": 10147,
+      "ms": 10083,
       "messages": [],
       "events": []
     }
@@ -186,7 +186,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 268,
+      "ms": 242,
       "messages": [],
       "filterEvents": [],
       "layerFilters": [
@@ -599,7 +599,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 337,
+      "ms": 372,
       "messages": [],
       "filterEvents": [],
       "layerFilters": [
@@ -627,7 +627,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 0,
+      "ms": 1,
       "messages": [],
       "filterEvents": [],
       "layerFilters": [
@@ -782,7 +782,7 @@
       "idView": "MX-FX1HT-Z7KXL-8X22K",
       "status": "resolved",
       "value": true,
-      "ms": 1262,
+      "ms": 1166,
       "messages": [],
       "view_added": true,
       "visible": true,
@@ -792,7 +792,7 @@
       "idView": "MX-KEG0W-U2098-JKIYJ",
       "status": "resolved",
       "value": true,
-      "ms": 960,
+      "ms": 928,
       "messages": [],
       "view_added": true,
       "visible": true,
@@ -803,7 +803,7 @@
       "status": "rejected",
       "error": "Resolver failed ( idResolver =  view_add, idRequest = 5, msg = View not found: \"MX-ZZZZZ-ZZZZZ-ZZZZZ\") ",
       "errorType": "object",
-      "ms": 300,
+      "ms": 247,
       "messages": [],
       "view_added": false,
       "visible": false,
@@ -819,7 +819,7 @@
     "toPublic": {
       "status": "resolved",
       "value": true,
-      "ms": 1802,
+      "ms": 1476,
       "messages": [],
       "events": [
         "view_remove",
@@ -839,6 +839,13 @@
       "project_changed": false,
       "currentProject": "MX-YBJ-YYF-08R-UUR-QW6"
     }
+  },
+  "setProjectNoViews": {
+    "status": "resolved",
+    "value": true,
+    "ms": 1811,
+    "project_changed": true,
+    "currentProject": "MX-YBJ-YYF-08R-UUR-QW6"
   },
   "headless": true,
   "host": "app.staging.mapx.org"

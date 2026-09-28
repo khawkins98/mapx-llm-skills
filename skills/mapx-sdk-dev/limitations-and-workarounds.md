@@ -368,6 +368,14 @@ function askWithTimeout(mapx, resolver, opt = {}, ms = 15000) {
 }
 ```
 
+**Next release**: on `staging` (1.14.1-alpha.17) this is fixed. `ask()`
+rejects with a `MapxSdkError` (e.g. `No resolver for 'x'. Use
+'get_sdk_methods' to list available…`) and there is a `requestTimeoutMs`
+Manager option (default 120 s). Filter setters on a view that isn't loaded
+still resolve `undefined` with an `err_view_invalid` message there.
+`askWithTimeout` keeps working, and its fail-fast path becomes redundant
+but harmless.
+
 The error message carries the resolver name but not your request, so if
 two calls to the *same* resolver are in flight, one failure rejects both
 wrappers. That's usually acceptable, and the timeout remains the backstop.
@@ -566,6 +574,11 @@ the view, and a naive retry runs it twice.
 > **Runtime-verified 2026-09-28** (both modes): with 11 requests pending, a
 > 12th `set_language {lang:"fr"}` was rejected with
 > `too_many_request 11. Max= 10`, and `get_language` afterwards returned `"fr"`.
+
+**Next release**: fixed on `staging` (1.14.1-alpha.17). The over-limit call
+is rejected with an `Error` (`Too many SDK requests (10/10)`) and is not
+executed, and the check becomes `>=`, so the limit is exactly
+`maxSimultaneousRequest`.
 
 **Workarounds**:
 1. **Throttle** (preferred): use sequential loops (`for … of`) or a small

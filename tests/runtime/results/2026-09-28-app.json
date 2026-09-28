@@ -1,7 +1,7 @@
 {
   "mode": "app",
-  "startedAt": "2026-09-28T14:18:08.149Z",
-  "readyMs": 10092,
+  "startedAt": "2026-09-28T15:13:20.768Z",
+  "readyMs": 4288,
   "landedProjectA": "MX-YBJ-YYF-08R-UUR-QW6",
   "basics": {
     "version": "1.14.0-fix.1",
@@ -22,7 +22,7 @@
     "setProjection_object": {
       "status": "resolved",
       "value": true,
-      "ms": 3,
+      "ms": 2,
       "messages": [],
       "events": []
     },
@@ -31,21 +31,21 @@
       "value": {
         "type": "globe"
       },
-      "ms": 300,
+      "ms": 256,
       "messages": [],
       "events": []
     },
     "setProjection_string": {
       "status": "resolved",
       "value": true,
-      "ms": 195,
+      "ms": 169,
       "messages": [],
       "events": []
     },
     "getProjection_after_string": {
       "status": "resolved",
       "value": "mercator",
-      "ms": 190,
+      "ms": 210,
       "messages": [],
       "events": []
     },
@@ -198,7 +198,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 245,
+      "ms": 234,
       "messages": [],
       "filterEvents": [],
       "layerFilters": [
@@ -225,7 +225,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 1,
+      "ms": 0,
       "messages": [],
       "filterEvents": [],
       "layerFilters": [
@@ -466,7 +466,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 698,
+      "ms": 654,
       "messages": [],
       "filterEvents": [
         {
@@ -499,7 +499,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 48,
+      "ms": 61,
       "messages": [],
       "filterEvents": [
         {
@@ -558,7 +558,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 192,
+      "ms": 73,
       "messages": [],
       "filterEvents": [
         {
@@ -590,7 +590,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 49,
+      "ms": 117,
       "messages": [],
       "filterEvents": [
         {
@@ -650,7 +650,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 476,
+      "ms": 430,
       "messages": [],
       "filterEvents": [],
       "layerFilters": [
@@ -678,7 +678,7 @@
       },
       "status": "resolved",
       "value": "undefined",
-      "ms": 1,
+      "ms": 0,
       "messages": [],
       "filterEvents": [],
       "layerFilters": [
@@ -727,7 +727,7 @@
       "idView": "MX-FX1HT-Z7KXL-8X22K",
       "status": "resolved",
       "value": true,
-      "ms": 1798,
+      "ms": 1274,
       "messages": [],
       "view_added": true,
       "visible": true,
@@ -737,7 +737,7 @@
       "idView": "MX-KEG0W-U2098-JKIYJ",
       "status": "resolved",
       "value": true,
-      "ms": 531,
+      "ms": 916,
       "messages": [],
       "view_added": true,
       "visible": true,
@@ -746,7 +746,7 @@
     "bogus": {
       "idView": "MX-ZZZZZ-ZZZZZ-ZZZZZ",
       "status": "pending",
-      "ms": 30001,
+      "ms": 30002,
       "messages": [
         {
           "level": "error",
@@ -770,8 +770,9 @@
   },
   "setProject": {
     "toPublic": {
-      "status": "pending",
-      "ms": 30002,
+      "status": "resolved",
+      "value": true,
+      "ms": 988,
       "messages": [],
       "events": [
         "view_remove",
@@ -780,17 +781,25 @@
         "view_removed",
         "layers_ordered"
       ],
-      "project_changed": false,
+      "project_changed": true,
       "currentProject": "MX-YBJ-YYF-08R-UUR-QW6"
     },
     "toInaccessible": {
       "status": "pending",
-      "ms": 20002,
+      "ms": 20001,
       "messages": [],
       "events": [],
       "project_changed": false,
       "currentProject": "MX-YBJ-YYF-08R-UUR-QW6"
     }
   },
-  "headless": true
+  "setProjectNoViews": {
+    "status": "resolved",
+    "value": true,
+    "ms": 917,
+    "project_changed": true,
+    "currentProject": "MX-YBJ-YYF-08R-UUR-QW6"
+  },
+  "headless": true,
+  "host": "app.mapx.org"
 }

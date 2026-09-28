@@ -354,10 +354,11 @@ const switched = (await mapx.ask("get_project")) === target;
 
 **Runtime behaviour** (verified 2026-09-28 as a guest):
 - Switching to a **public** project with no views open resolved `true` in
-  ~1.3 s and fired `project_changed`.
-- Switching to a public project **with views open**: the project did change
-  (`get_project` returned the target), but the promise never settled and
-  `project_changed` never fired.
+  about 1 s and fired `project_changed` (prod and `staging`).
+- Switching to a public project **with views open** is **intermittent on
+  prod**. In one run it resolved `true`; in another the project changed
+  (`get_project` returned the target) but the promise never settled and
+  `project_changed` never fired. On `staging` it resolved `true` both times.
 - Switching to a project the user **can't open**: MapX shows a "The project
   cannot be loaded. Please log in and try again." dialog inside the iframe,
   and the promise stays pending until someone closes it.
@@ -575,14 +576,15 @@ await mapx.ask("set_view_layer_transparency", {
 
 ### get_view_layer_transparency
 
-Returns the stored transparency/opacity value for the view (in static mode,
-the 0–1 opacity that was set).
+Returns the view's stored **opacity**, not transparency (runtime-verified).
+In app mode that's MapLibre opacity 0–1 (1 = opaque, the default). In static
+mode it's whatever number you last passed, even an invalid one.
 
 ```javascript
 const t = await mapx.ask("get_view_layer_transparency", {
   idView: "MX-XXXXX",
 });
-// => 50
+// app mode after { value: 50 } => 0.5 ; after { value: 0 } => 1
 ```
 
 ---
@@ -621,10 +623,14 @@ const summary = await mapx.ask("get_view_source_summary", {
   idAttr: "population",
   stats: ["base", "attributes"],
 });
-// => { count, min, max, mean, ... }
+// => { id, type, attributes, attributes_types, row_count,
+//      attribute_stat: { attribute, min, max, ... }, extent_sp, extent_time?, ... }
+//    (keys seen at runtime; min/max live under attribute_stat)
 ```
 
-**Important**: Call `map_wait_idle()` first to avoid stale/empty results.
+Computed server-side from the view's source, so it doesn't depend on what is
+rendered. For `rt` views the underlying WMS call can throw and hang; use
+`askWithTimeout`.
 
 ### download_view_source_geojson
 

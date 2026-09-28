@@ -67,7 +67,7 @@ but is no longer exposed through the SDK.
 
 ---
 
-## 3. Observation: view_add fails silently for cross-project views
+## 3. Observation: cross-project view_add (did nothing on 1.13.19; bogus IDs hang on 1.14)
 
 **Severity**: Developer experience — not a crash, but a confusing silent
 failure.
@@ -180,10 +180,13 @@ never settled even though the flight completed.
 ## 10. DX: `set_project` promise can stay pending
 
 **Evidence** (runtime, app mode, guest):
-- To a public project with views open: the project changed (`get_project`
-  returned the target) but the promise never settled within 30 s and
-  `project_changed` never fired. With no views open it resolved `true` in
-  ~1.3 s. This looks like a race on `events.once("views_list_updated")`.
+- To a public project with views open: **intermittent**. In one of two prod
+  runs the project changed (`get_project` returned the target) but the
+  promise never settled within 30 s and `project_changed` never fired; the
+  other run resolved `true`. With no views open it resolved `true` in about
+  1 s. This looks like a race on `events.once("views_list_updated")`, which
+  is registered after the views are closed. `staging` rewrote project
+  switching and resolved `true` in every run.
 - To a project the guest can't open: the promise waits on the "The project
   cannot be loaded" dialog until a human closes it.
 

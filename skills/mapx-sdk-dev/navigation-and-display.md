@@ -128,7 +128,7 @@ const features = await mapx.ask("map", { method: "queryRenderedFeatures" });
 ### Scenario: Multi-layer + fly + transparency
 
 ```javascript
-// Clear map
+// Clear map (openViews: the view_added/view_removed-driven Set from views-and-layers.md)
 for (const id of openViews) {
   await mapx.ask("view_remove", { idView: id });
 }

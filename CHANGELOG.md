@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added the previously missing `sdk/filters.js`, `sdk/ui.js` and `ui/log.js` templates, plus discovery mode when no views are configured.
 - **Agent standard**: Added `AGENTS.md` machine-readable skill index at repository root and symlinked `CLAUDE.md`.
 - **Security & limits**: Documented the `maxSimultaneousRequest` ceiling (including that rejected requests still execute), the `safeViewAdd` pattern, and Content-Security-Policy (CSP) header requirements.
+- **Next-release notes**: the skills flag what changes in MapX 1.14.1 (verified on `staging`): rejecting instead of hanging, `requestTimeoutMs`, and the request-limit fix.
 - **Tooling**: `scripts/check-resolvers.sh` checks every documented resolver name against the upstream source.
 - **Runtime verification**: `tests/runtime/` (Playwright, static + app mode against live app.mapx.org). Results from 2026-09-28 are committed and now back the docs. Findings: public cross-project views load on 1.14; filter/transparency parameter splits and app-mode slider snapping; rejected `too_many_request` calls still execute; string `setProjection` is ignored; `map_fly_to` > 10 s hangs; `set_project` can stay pending; inaccessible `project=` silently loads HOME; `ready` needs a secure-context host page (headless works).
 
