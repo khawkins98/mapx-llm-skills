@@ -13,59 +13,87 @@ Common issues organized by symptom.
 - Verify the project ID is valid (visit the URL directly in a browser)
 - Ensure you're not calling `new mxsdk.Manager()` more than once
 
-**Symptom**: `ready` never fires in headless Chromium (Playwright/Puppeteer).
+**Symptom**: `ready` never fires in Playwright/Puppeteer.
 
-- MapX requires WebGL to render the map. Headless Chromium doesn't
-  provide a real GPU context, so the MapX app inside the iframe never
-  finishes initializing and `ready` never fires.
-- **Fix**: use `headless: false` (headed mode). The browser window can
-  be off-screen or minimized, but it needs a real rendering context.
-- The SDK script loads fine in headless (you can verify `typeof mxsdk`
-  is `"object"`), and the Manager is created, but the iframe app stalls.
+- **Cause**: the host page isn't a secure context. With `page.setContent()`
+  (an `about:blank` page) the iframe logs `crypto.randomUUID is not a
+  function` and then `Cannot access '…' before initialization`, and never
+  reaches `ready`.
+- **Fix**: serve the host page from `http://localhost` (a few lines of
+  `node:http`) and `page.goto()` it. Headless Chromium works fine that way.
 
-> *Evidence*: Tested April 2026 with Playwright 1.58 on macOS. In
-> headless mode, `window._status` stayed at "manager created" for 90s
-> before timeout. Switching to `headless: false` with the same code
-> produced `ready` in ~4 seconds and returned 85 views.
+> *Evidence*: Verified 2026-09-28 with Playwright 1.62, headless: `ready`
+> in ~4 s from `http://localhost`, never from `setContent()` (even headed).
+> An April 2026 note here blamed headless WebGL; the secure-context
+> requirement is the actual cause on 1.14.
 
 **Symptom**: `ready` fires but SDK calls hang or timeout.
 
-- MapX app may still be loading views — call `map_wait_idle()` first
+- The resolver may not exist in this mode (e.g. an app-only resolver with
+  `static: true`) or may have thrown. Both make `ask()` hang; see
+  "SDK Call Hangs Forever" below.
+- Listen to `mapx.on("message", m => console.log(m.key, m.vars))` to see
+  `err_resolver_not_found` / `err_resolver_failed`
 - Check network tab for failing requests to `app.mapx.org`
+
+**Symptom**: SDK call rejects with `too_many_request <nR>. Max= 10`.
+
+- The SDK rejects a call made while more than `maxSimultaneousRequest` (default 10) requests are pending.
+- **The rejected request still executes inside MapX**. Don't blindly retry side-effecting calls.
+- **Fix**: throttle (sequential loop or small pool) instead of unbounded `Promise.all`, or raise `maxSimultaneousRequest` in `new Manager({...})`. See [limitations §13](limitations-and-workarounds.md).
 
 ## view_add Does Nothing
 
 **Symptom**: `view_add` returns without error but the view doesn't appear.
 
-- **Most common cause**: The view ID belongs to a different project.
-  Cross-project `view_add` fails silently.
-  See [Limitation §1: Cross-Project View Scope](limitations-and-workarounds.md#1-cross-project-view-scope).
+- Check the return value: `true` = added, `undefined` = failed (look for an
+  `err_view_invalid` message). A call that **never** returns means the view
+  lookup threw.
+- A **non-existent** ID makes `view_add` hang (message `View not found`).
+  Public views from **other projects do load** on 1.14 (runtime-verified);
+  on 1.13.19 they did nothing. See
+  [Limitation §1](limitations-and-workarounds.md#1-views-outside-the-connected-project).
+- Check which project actually loaded (`get_project`, app mode): an
+  inaccessible `project=` silently falls back to HOME.
 - Verify the view ID is correct (check for typos in the MX-XXXXX format)
 - Use `get_views()` to list all views in the current project
 - Check that the view hasn't been unpublished or deleted from MapX
+- **Verification**: Use the `safeViewAdd` pattern or listen to `mapx.on("view_added")`
+  to confirm when the view actually renders.
 
 ## Filters Don't Work
 
 **Symptom**: `set_view_layer_filter_numeric` or `_text` has no visible effect.
 
 - Only works on `vt` (vector tile) views — no effect on raster or cc
-- For numeric: the `from`/`to`/`attribute` form worked in testing but the
-  SDK source documents a `value` param -- try both if one doesn't work
+- **Wrong params for the mode** (most likely): app mode (default) reads only
+  `value`; static mode reads `from`/`to` (numeric) or `values` + `attribute`
+  (text). `{from, to}` alone does nothing in app mode. Send both forms.
+- In app mode the numeric filter always applies to the view's **styled**
+  attribute; `attribute` is ignored
+- In app mode the range **snaps to the slider step**, `(min + max) / 1000`
+  of the attribute. A narrow range (e.g. `[2, 60]` on a 0–153 290 attribute)
+  collapses to `0..0` and hides nearly everything
+- In app mode, sending only the static-mode text params (`values`) **clears**
+  the text filter
+- In static mode, a text filter without `attribute` throws and hangs
 - For text: values must exactly match the attribute data (case-sensitive)
-- Call `map_wait_idle()` before applying filters
+- `null` does not clear a numeric filter; reset to the full min/max range
 - Use `get_view_table_attribute` to verify what values actually exist
 
 **Symptom**: `get_view_source_summary` returns empty or stale data.
 
-- Call `map_wait_idle()` first — this is the most common fix
-- The view must be added to the map before querying its data
+- Stats are computed server-side from the source, so rendering state isn't the cause
+- Check `idAttr` exists (`get_view_table_attribute_config`)
+- For `rt` views the summary does a WMS call that can be slow or throw (hang); use `askWithTimeout`
 
 ## Click Events Not Firing
 
 **Symptom**: `click_attributes` never fires when clicking features.
 
-- Ensure `set_vector_highlight({enable: true})` is called after ready
-- Only fires for MapX-managed views (not Mapbox passthrough layers)
+- It is independent of the spotlight: `set_vector_spotlight` is **not**
+  required for `click_attributes`
+- Only fires for MapX-managed views (not MapLibre passthrough layers)
 - Check that the view is actually a vector type (`vt`) — **true raster tile**
   views (gridded imagery) don't produce feature attributes; however, some
   views typed as `rt` in the MapX metadata are actually stored internally
@@ -90,7 +118,7 @@ Common issues organized by symptom.
 - Verify paint properties (e.g., `circle-radius` must be > 0)
 - The layer may be underneath other layers — try adding a label layer
   to confirm the source data loaded
-- Check console for errors — invalid Mapbox GL specs throw
+- Check console for errors — invalid MapLibre / Mapbox GL style specs throw
 
 **Symptom**: Layers appear but disappear after zooming or panning.
 
@@ -101,36 +129,40 @@ Common issues organized by symptom.
 
 **Symptom**: `has_dashboard()` returns false even though the view has charts.
 
-- Call `map_wait_idle()` first
+- Call it after the `view_added` event for that view: the dashboard is
+  created before `view_added` fires
 - The dashboard may only be available at certain zoom levels
 - Not all views with data have dashboards — dashboards are an optional
   MapX configuration
 
 **Symptom**: Dashboard panel opens but is empty.
 
-- The view's data may not have loaded yet — `map_wait_idle()` again
+- The view's data may not have loaded yet. Wait for `view_added`, and after a camera move call `map_wait_idle()`
 - Try removing and re-adding the view
 
 ## Map Composer / Share Modal
 
 **Symptom**: Modal doesn't open.
 
-- These calls may be blocked if MapX is still loading
-- Try after `map_wait_idle()`
+- These calls may be blocked if MapX is still loading. Try again after `ready`
+  and after startup views have fired `view_added`
+- App-only modals (`show_modal_login`, `show_modal_view_meta`, …) hang in static mode
 - Check if immersive mode is active — some modals require UI chrome
 
 ## SDK Call Hangs Forever
 
 **Symptom**: `await mapx.ask(...)` never resolves — no result, no error.
 
-- If the resolver throws an exception (rather than returning normally),
-  the SDK's FrameManager drops the request without resolving the Promise.
-  Wrap calls in a timeout — see
-  [limitations-and-workarounds.md](limitations-and-workarounds.md) §9.
+- If the resolver throws, **or doesn't exist in the current mode** (e.g.
+  `get_views_id_open`, `set_project` with `static: true`), the SDK's
+  FrameManager drops the request without settling the Promise. Wrap calls
+  with `askWithTimeout`, which also fails fast on `err_resolver_*` messages.
+  See [limitations-and-workarounds.md](limitations-and-workarounds.md) §9 and §14.
+- Check the method exists: `await mapx.ask("get_sdk_methods")` (omits `panels_*`)
 - Check that `ready` has fired before calling `ask()`
 - Check browser console for iframe errors or postMessage failures
-- For `get_view_source_summary` on `rt` views, the WMS call has a 20s
-  internal timeout — it will eventually return, but may be slow
+- For `get_view_source_summary` on `rt` views, the WMS call can be slow
+  and can throw, which makes the call hang; use `askWithTimeout`
 
 ## Performance Issues
 
@@ -175,14 +207,14 @@ mapx.on("ready", async () => {
   await mapx.ask("view_add", { idView: "..." });
 });
 
-// WRONG: querying before idle
-await mapx.ask("view_add", { idView: "..." });
-const summary = await mapx.ask("get_view_source_summary", { ... }); // Stale!
+// WRONG: assuming map_wait_idle waits for a view to load
+await mapx.ask("view_add", { idView });
+await mapx.ask("map_wait_idle"); // resolves immediately if the camera isn't moving
+await mapx.ask("has_dashboard"); // may run before the view's dashboard exists
 
-// RIGHT: wait for idle
-await mapx.ask("view_add", { idView: "..." });
-await mapx.ask("map_wait_idle");
-const summary = await mapx.ask("get_view_source_summary", { ... });
+// RIGHT: view_add resolves true once the view is fully added (view_added fires too)
+const ok = await mapx.ask("view_add", { idView });
+if (ok === true) await mapx.ask("has_dashboard");
 
 // WRONG: removing source before layers
 await mapx.ask("map", { method: "removeSource", parameters: ["src"] }); // Error!

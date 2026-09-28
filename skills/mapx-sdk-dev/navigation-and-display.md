@@ -47,22 +47,30 @@ const center = await mapx.ask("map", { method: "getCenter" });
 
 ## Projections
 
-Toggle between Mercator (default) and Globe projections via the Mapbox
-GL JS passthrough:
+Toggle between Mercator (default) and Globe projections via the MapLibre
+GL JS v5 passthrough. MapLibre takes a **projection object**
+(`{ type: "globe" }`), not the string form Mapbox GL v2 used. MapX itself
+calls `map.setProjection({ type: projName })` (`map_helpers/index.js`).
 
 ```javascript
 // Set globe
-await mapx.ask("map", { method: "setProjection", parameters: ["globe"] });
+await mapx.ask("map", { method: "setProjection", parameters: [{ type: "globe" }] });
 
 // Read current
 const proj = await mapx.ask("map", { method: "getProjection" });
-// => {name: "globe", ...} or {name: "mercator", ...}
+// => { type: "globe" } or { type: "mercator" }; undefined on a fresh map (= mercator)
 
 // Toggle
 const current = await mapx.ask("map", { method: "getProjection" });
-const next = current?.name === "globe" ? "mercator" : "globe";
-await mapx.ask("map", { method: "setProjection", parameters: [next] });
+const next = current?.type === "globe" ? "mercator" : "globe";
+await mapx.ask("map", { method: "setProjection", parameters: [{ type: next }] });
 ```
+
+> **Pre-1.14 note**: up to MapX 1.13.x (Mapbox GL JS v2) the string form
+> `setProjection("globe")` and `getProjection().name` were correct. On 1.14
+> the string form is **silently ignored**: no error, and the map stays
+> mercator (runtime-verified 2026-09-28). Code written against earlier
+> versions needs updating.
 
 ## 3D Modes
 
@@ -98,18 +106,21 @@ await mapx.ask("set_immersive_mode", { toggle: true });
 
 ## Waiting for the Map
 
-`map_wait_idle()` is essential before operations that depend on rendered
-data. Always call it between navigation and:
+`map_wait_idle()` resolves once the camera stops moving. If the map is not
+moving it resolves **immediately**, and it never waits for tiles or views
+to load. Call it between a camera move and anything that depends on the
+final viewport:
 - Dashboard operations
-- Filter operations
-- Data queries / statistics
-- Attribute introspection
+- `queryRenderedFeatures` / other rendered-data queries
+- Filters applied right after a fly-to
+
+To wait for a view to finish loading, use the `view_added` event instead.
 
 ```javascript
 await mapx.ask("map_fly_to", { center: { lng: 85, lat: 28 }, zoom: 6 });
 await mapx.ask("map_wait_idle");
-// NOW safe to query or filter
-const summary = await mapx.ask("get_view_source_summary", { ... });
+// Camera settled: safe to query rendered features or filter
+const features = await mapx.ask("map", { method: "queryRenderedFeatures" });
 ```
 
 ## Common Navigation Patterns
@@ -117,7 +128,7 @@ const summary = await mapx.ask("get_view_source_summary", { ... });
 ### Scenario: Multi-layer + fly + transparency
 
 ```javascript
-// Clear map
+// Clear map (openViews: the view_added/view_removed-driven Set from views-and-layers.md)
 for (const id of openViews) {
   await mapx.ask("view_remove", { idView: id });
 }
@@ -129,9 +140,9 @@ await mapx.ask("view_add", { idView: landslideViewId });
 // Fly to area of interest
 await mapx.ask("common_loc_fit_bbox", { code: "NPL", param: { duration: 2000 } });
 
-// Blend layers with transparency
-await mapx.ask("set_view_layer_transparency", { idView: floodViewId, value: 40 });
-await mapx.ask("set_view_layer_transparency", { idView: landslideViewId, value: 50 });
+// Blend layers with transparency (value = app mode 0..100, opacity = static mode 0..1)
+await mapx.ask("set_view_layer_transparency", { idView: floodViewId, value: 40, opacity: 0.6 });
+await mapx.ask("set_view_layer_transparency", { idView: landslideViewId, value: 50, opacity: 0.5 });
 ```
 
 ### Scenario: View + dashboard

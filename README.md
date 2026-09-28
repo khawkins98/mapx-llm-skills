@@ -9,14 +9,16 @@ I put these skills together while embedding MapX maps for disaster risk reductio
 The MapX SDK has [documentation in the GitHub source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), including a README and inline code comments. That said, there are some gaps — there's no standalone method catalog, no public API for view discovery, and some features are easier to find if you already know the resolver names. These skills try to fill in those gaps based on what I've learned from reading the source and testing.
 
 A few examples of things I had to figure out by experimentation:
-- `view_add` fails silently for views outside the current project (no error, no network request)
+- `view_add` did nothing for views outside the current project on 1.13.19 (no error); on 1.14 public ones load, but a bad ID makes the call hang forever
+- Resolver failures (and resolvers missing in static mode) make `ask()` hang forever rather than reject
+- The filter and transparency resolvers read different parameters in static and app mode
 - `toggle_draw_mode` is referenced in older wiki examples but was removed from the SDK
 - The postMessage bridge can't pass callbacks, so click interaction on custom layers needs a coordinate-matching workaround
-- `map_wait_idle()` has to come before dashboard or filter operations, but this isn't always obvious from the docs
+- `map_wait_idle()` only waits while the camera is moving; it doesn't wait for tiles or views
 
 **A note on accuracy:** I'm relatively new to MapX, and the MapX developers at UNEP/GRID-Geneva will know the platform far better than I do. If you spot something wrong or outdated in these skills, please open an issue — corrections are very welcome.
 
-As of early 2026, MapX doesn't have its own LLM skills or AI coding integrations. [Mapbox has agent skills](https://github.com/mapbox/mapbox-agent-skills) (MapX uses Mapbox GL JS under the hood), so there's precedent for this kind of thing in the geospatial space.
+As of 2026, MapX doesn't have official LLM skills or AI coding integrations. [Mapbox has agent skills](https://github.com/mapbox/mapbox-agent-skills) (MapX used Mapbox GL JS v2 until April 2026 and now uses MapLibre GL JS v5), so there's precedent for this kind of thing in the geospatial space.
 
 ## Skills
 
@@ -29,13 +31,14 @@ Both tools auto-detect this skill when working on MapX SDK code. You can also in
 
 Provides:
 
-- Method catalog (30+ resolver methods with signatures and return types)
-- SDK initialization patterns (Manager constructor, singleton, ready event)
-- View management (add/remove, GeoJSON views, Mapbox passthrough, layer ordering)
-- Navigation and display (fly-to, projections, 3D modes, country/region codes)
+- Method catalog (60+ resolver methods with signatures and return types, checked against the SDK `1.14.0-fix.1` source)
+- SDK initialization patterns (Manager constructor, ES6 module / UMD, singleton, ready event)
+- View management (add/remove, GeoJSON views, MapLibre passthrough, layer ordering, safeViewAdd)
+- Navigation and display (fly-to, jump-to, bounds, projections, 3D modes, country/region codes)
 - Filtering and data (numeric/text filters, transparency, data introspection, export)
-- UI controls (language, themes, dashboards, map composer, share modal)
-- Known limitations and workarounds (cross-project scope, no native events, click fallbacks)
+- UI controls (language, themes, dashboards, panels API, map composer, share modal)
+- Event catalog (view lifecycle, filters, legends, project changes, network status)
+- Known limitations and workarounds (hanging promises, static vs app mode differences, cross-project scope, concurrency ceiling, click fallbacks)
 - Troubleshooting guide organized by symptom
 
 **Example prompts:**
@@ -139,6 +142,8 @@ If you're working on the skill content in this repo:
    - Copilot CLI: install from your local repo with `copilot plugin install ./` (it caches locally, so re-run after each edit unless you use `/skills reload`)
 
 3. **Iterate** — edit skill files and verify the skills activate and produce correct output.
+   - Run `scripts/check-resolvers.sh [ref]` to confirm every `ask("…")` resolver in the skills exists upstream (defaults to `main`; pass a tag like `1.14.0-fix.1`).
+   - Run `tests/runtime` (`npm install && node run.mjs`) to re-verify documented behaviour against the live SDK in static and app mode. See [tests/runtime/README.md](tests/runtime/README.md).
    - In Copilot CLI you can also run `/skills reload` during a session after editing a skill instead of reinstalling immediately.
 
 4. **Publish** — push to the repo. To pick up changes in Copilot CLI after a pull: `copilot plugin install /path/to/repo` (re-run install to refresh the cache).
@@ -151,7 +156,7 @@ If you're working on the skill content in this repo:
 - **SDK source**: https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk
 - **UMD script**: `https://app.mapx.org/sdk/mxsdk.umd.js`
 - **Communication**: postMessage bridge (serialized JSON only)
-- **Map engine**: Mapbox GL JS (wrapped by MapX, accessible via passthrough)
+- **Map engine**: MapLibre GL JS v5 since MapX 1.14 (Mapbox GL JS v2 in 1.13.x and earlier); wrapped by MapX, accessible via passthrough
 
 ### SDK Architecture
 
@@ -170,11 +175,14 @@ The MapX SDK uses a **resolver pattern**:
 | `rt` | Raster Tiles | Gridded/continuous data — display only |
 | `cc` | Custom Coded | Dynamic/real-time views — JavaScript + API feeds |
 | `sm` | Story Map | Narrative presentations with step-by-step navigation |
+| `gj` | GeoJSON | Custom data added via `view_geojson_create` |
 
 ### Key Limitations
 
-- **Cross-project scope**: `view_add` only works for views in the connected project
-- **No native events**: Parent page can't listen to Mapbox `moveend`, `zoomend`, etc.
+- **Hanging promises**: failed or unknown resolvers never settle `ask()`; use a timeout wrapper
+- **Static vs app mode**: app-only resolvers hang in static mode; filters and transparency take different params per mode
+- **Cross-project scope**: on 1.14, public views from other projects load via `view_add` (runtime-verified); on 1.13.19 they did nothing. Non-existent IDs hang
+- **No native events**: Parent page can't listen to MapLibre `moveend`, `zoomend`, etc.
 - **No click callbacks on passthrough layers**: `map.on("click", ...)` not possible
 - **No `toggle_draw_mode`**: Was removed from the SDK after 2020; even when it existed, it returned only a boolean and couldn't pass drawn geometry back to the parent page
 - **Serialization boundary**: Everything through postMessage must be JSON-serializable
@@ -288,9 +296,11 @@ As of March 2026, the plugin system is still evolving. Here's where to find curr
 ## Resources
 
 - [MapX Platform](https://app.mapx.org)
+- [MapX Documentation](https://docs.mapx.org)
 - [MapX SDK Source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
 - [MapX GitHub](https://github.com/unep-grid/mapx)
-- [Mapbox GL JS Docs](https://docs.mapbox.com/mapbox-gl-js/api/) (underlying map engine)
+- [MapLibre GL JS Docs](https://maplibre.org/maplibre-gl-js/docs/) (underlying map engine)
+- [Mapbox GL JS Docs](https://docs.mapbox.com/mapbox-gl-js/api/) (API specification reference)
 - [Mapbox Agent Skills](https://github.com/mapbox/mapbox-agent-skills) (similar plugin for the Mapbox ecosystem)
 
 ## License

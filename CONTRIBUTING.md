@@ -10,20 +10,23 @@ Open an issue at https://github.com/khawkins98/mapx-llm-skills/issues. Most usef
 
 - **Wrong information in a skill** — link the file and line, paste the wrong claim, and the correction.
 - **Missing pattern** — what you tried to do, what wasn't documented, what the actual answer turned out to be.
-- **Outdated SDK behaviour** — MapX SDK version (current target as of writing: 1.13.19), the resolver name affected, observed vs documented behaviour.
+- **Outdated SDK behaviour** — MapX SDK version (current target: 1.14.0-fix.1), the resolver name affected, observed vs documented behaviour.
 
 ## Proposing changes
 
 1. Fork the repo and branch off `main`.
 2. Edit the relevant `SKILL.md` or supporting `.md` file under `skills/<skill-name>/`. Keep examples compact and copy-pasteable.
 3. If you change facts that are also mirrored in `README.md`, update both.
-4. Open a draft PR while you iterate.
+4. Add a short note under `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md).
+5. Open a draft PR while you iterate.
 
 ## What to watch when editing skills
 
 - The YAML frontmatter `description` in `SKILL.md` controls auto-detection — don't break it lightly.
 - Don't add a `skills` field to `.claude-plugin/plugin.json`. Claude Code rejects it with a validation error.
-- Verify code examples against known SDK quirks (silent-failure resolvers, removed methods like `toggle_draw_mode`). The CLAUDE.md file lists the major ones.
+- Verify code examples against known SDK quirks (hanging resolvers, static-vs-app parameter differences, removed methods like `toggle_draw_mode`). AGENTS.md (symlinked as CLAUDE.md) lists the major ones.
+- Check claims against the upstream source (`unep-grid/mapx`, `app/src/js/sdk/src/mapx_resolvers/`), and say in the text whether a behaviour was runtime-tested or read from source.
+- Run `scripts/check-resolvers.sh` before opening a PR; it fails if a documented resolver doesn't exist upstream.
 
 ## Branch and commit style
 

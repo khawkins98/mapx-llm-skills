@@ -3,12 +3,13 @@
 Notes for possible feedback to the MapX SDK maintainers (`unep-grid/mapx`).
 Not filed yet — collecting evidence and refining before submitting.
 
-> **Version context**: All observations are against the deployed UMD at
-> `app.mapx.org/sdk/mxsdk.umd.js` (embedded version string 1.13.19),
-> March 2026. The GitHub `main` branch (the default; `master` is stale)
-> has `@fxi/mxsdk` at 1.9.40-alpha.1 and npm `latest` at
-> 1.13.14-alpha.10 -- none of these match. Line references to the source
-> may not correspond to the maintainers' working tree.
+> **Version context**: §1–§4 were observed at runtime against the deployed UMD at
+> `app.mapx.org/sdk/mxsdk.umd.js` (embedded version string 1.13.19, March 2026).
+> All sections were re-checked against the upstream **source** at tag
+> `1.14.0-fix.1` (deployed August 2026). §1, §3 and §5–§11 were
+> **reproduced at runtime on 2026-09-28** with `tests/runtime/` (Playwright,
+> static and app mode); raw results are in `tests/runtime/results/`. Line references are to
+> `app/src/js/sdk/src/` in `unep-grid/mapx` at that tag.
 
 ---
 
@@ -16,7 +17,7 @@ Not filed yet — collecting evidence and refining before submitting.
 
 **Severity**: Bug — causes `ask()` to hang forever.
 
-**Evidence**: Confirmed in `frameManager.js` source on GitHub `master`.
+**Evidence**: Confirmed in `frameManager.js` source on GitHub `main` (`_handleMessageWorker`, lines 375–380 at tag `1.14.0-fix.1`). The same path swallows `err_resolver_not_found`, so calling an unknown or wrong-mode resolver also hangs.
 The response handler only calls `req.onResponse(message.value)` when
 `message.success` is `true`. There is no `else` branch and no `reject()`
 call. When a resolver throws an exception, the request is removed from the
@@ -66,7 +67,7 @@ but is no longer exposed through the SDK.
 
 ---
 
-## 3. Observation: view_add fails silently for cross-project views
+## 3. Observation: cross-project view_add (did nothing on 1.13.19; bogus IDs hang on 1.14)
 
 **Severity**: Developer experience — not a crash, but a confusing silent
 failure.
@@ -76,8 +77,15 @@ a different project returns without error — no network request, no thrown
 error, no visual change. The MapX app inside the iframe only resolves views
 from its loaded project. Cross-project references are silently ignored.
 
-**Suggestion**: The resolver could validate the view ID against the loaded
-project's view list and either reject the Promise or log a console warning.
+**1.14 update (runtime-verified 2026-09-28)**: this is largely fixed.
+`view_add` now fetches IDs missing from the project via `getViewRemote`,
+and a public view from another project loads (`true`, `view_added` fires).
+What remains: a **non-existent** ID throws `View not found` inside the
+resolver, so the promise never settles (§1). A falsy add result resolves
+`undefined` rather than `false`, although the JSDoc says `Promise<Boolean>`.
+
+**Suggestion**: Return `false` (or reject) for unknown IDs instead of
+throwing, which would be fixed for free by §1.
 
 **Format**: Discussion post or enhancement request.
 
@@ -99,11 +107,115 @@ objects through postMessage. No minimal reproduction case yet.
 
 ---
 
+## 5. Bug: `too_many_request` rejection still sends the request
+
+**Severity**: Bug — rejected calls still execute.
+
+**Evidence** (source, tag `1.14.0-fix.1`, `frameManager.js` `ask()`): when
+`nR > mR` the promise is rejected, but execution continues to
+`fm._post(req); fm._req.push(req);`. MapX runs the request anyway, and a
+caller that retries after the rejection runs it twice. The check also
+compares the count *before* adding the new request, so the effective
+ceiling is `maxSimultaneousRequest + 1`.
+
+**Suggestion**: `return` after `reject(...)`, and compare `nR >= mR`.
+
+---
+
+## 6. Bug: static-mode text filter throws when `attribute` is omitted
+
+**Evidence** (source, `map_helpers/view_filters.js` `viewSetTextFilter`):
+
+```js
+let { attribute, values, idView } = opt;
+if (isEmpty(attribute)) {
+  attribute = view?.data?.attribute?.name; // `view` is declared below → TDZ ReferenceError
+}
+...
+const view = getView(idView);
+```
+
+Combined with §1, `set_view_layer_filter_text` without `attribute` in static
+mode hangs.
+
+**Suggestion**: move `const view = getView(idView)` above the fallback.
+
+---
+
+## 7. DX: filter/transparency resolvers read different params per mode
+
+**Evidence** (source): in app mode, `set_view_layer_filter_numeric`,
+`set_view_layer_filter_text`, `set_view_layer_filter_time` and
+`set_view_layer_transparency` forward only `opt.value` to the view's UI
+widget. In static mode they read `from`/`to`/`attribute`, `values`/`attribute`,
+and `opacity` (a 0–1 MapLibre opacity, vs 0–100 transparency in app mode).
+The JSDoc marks `value` as "Deprecated" for the numeric filter, yet it is
+the *only* param app mode honours.
+
+**Suggestion**: normalise the params in the resolver before branching on
+mode, and document one scale for transparency.
+
+---
+
+## 8. DX: `get_sdk_methods` omits the panels resolvers
+
+**Evidence**: it lists `Object.getOwnPropertyNames` of the static/app
+prototypes only, so the inherited `MapxResolversPanels` methods
+(`panels_*`) are missing even though they are callable.
+
+---
+
+## 9. Bug: `map_fly_to` longer than 10 s hangs the SDK call
+
+**Evidence** (runtime, both modes): `_map_resolve_when` rejects with
+`"timeout"` after a hard-coded 10 s. A `duration: 12000` flight produced
+`err_resolver_failed` (`msg: "timeout"`), and, because of §1, the `ask()`
+never settled even though the flight completed.
+
+**Suggestion**: derive the timeout from `opt.duration` (e.g.
+`duration + 5000`), or resolve on `moveend` without a fixed cap.
+
+---
+
+## 10. DX: `set_project` promise can stay pending
+
+**Evidence** (runtime, app mode, guest):
+- To a public project with views open: **intermittent**. In one of two prod
+  runs the project changed (`get_project` returned the target) but the
+  promise never settled within 30 s and `project_changed` never fired; the
+  other run resolved `true`. With no views open it resolved `true` in about
+  1 s. This looks like a race on `events.once("views_list_updated")`, which
+  is registered after the views are closed. `staging` rewrote project
+  switching and resolved `true` in every run.
+- To a project the guest can't open: the promise waits on the "The project
+  cannot be loaded" dialog until a human closes it.
+
+**Suggestion**: register the `views_list_updated` listener before
+triggering the change, and don't block the SDK response on modal dialogs
+(return `false` and let the dialog be informational).
+
+---
+
+## 11. DX: inaccessible `project=` silently loads HOME
+
+**Evidence** (runtime): a Manager created with `?project=` set to a project
+the guest can't read (`MX-FC7-VJG-IKU-MCA-QXM`) loaded the public HOME
+project (`MX-YBJ-YYF-08R-UUR-QW6`) with no error or event. Embedders only
+notice because the views are wrong.
+
+**Suggestion**: emit an event or message (e.g. `project_fallback` or a
+warning with the requested ID) so the host page can react.
+
+---
+
 ## Suggested filing plan
 
 1. **One focused issue** for the FrameManager Promise bug (§1) — clear,
    confirmed in source, has a straightforward fix.
 
-2. **One discussion post** (they have `discussions/662` for API topics)
-   bundling §2–§4 as developer feedback from building an SDK embed project.
+2. **One focused issue** each for §5, §6 and §9: small, confirmed at
+   runtime, one-line fixes.
+
+3. **One discussion post** (they have `discussions/662` for API topics)
+   bundling §2–§4, §7, §8, §10 and §11 as developer feedback from building an SDK embed project.
    Frame it as constructive observations, not complaints.

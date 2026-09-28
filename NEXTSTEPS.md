@@ -21,32 +21,46 @@
    then `npm install && npm run build` to verify the generated project
    compiles. Try `npm run dev` and confirm the iframe loads.
 
+## Runtime verification (1.14)
+
+Done 2026-09-28 with `tests/runtime/` (static + app mode, headless):
+
+- [x] **Cross-project `view_add`**: public views from other projects load;
+      bogus IDs hang (`View not found`). `view_added` re-fires for open views.
+- [x] **Numeric filter**: `{from, to}` is a no-op in app mode; `value`
+      works in both. Found: app-mode slider snapping, string getter values.
+- [x] **Text filter**: static needs `values` + `attribute`; omitting
+      `attribute` hangs (TDZ bug reproduced). App mode: `values`-only clears.
+- [x] **Transparency**: static treats the number as 0–1 opacity (`50` is rejected).
+- [x] **`too_many_request`**: rejected request still executes.
+- [x] **Time filter in app mode**: needs `value`.
+- [x] **`getProjection()` on a fresh map**: `undefined`. String
+      `setProjection("globe")` is silently ignored.
+- [x] Found: `map_fly_to` > 10 s hangs; `set_project` can stay pending;
+      inaccessible `project=` silently loads HOME; headless works from a
+      secure context (`http://localhost`).
+
+Still open:
+
+- [ ] **Non-public view from another project**: no fixture was available.
+      Find a view whose `readers` excludes `public` and add it to `run.mjs`.
+- [ ] **Logged-in behaviour** (`set_project` to a private project, app-only
+      user resolvers): needs a test account.
+- [ ] **Re-run `tests/runtime` on each MapX release** and diff the results JSON.
+
 ## Content gaps to fill
 
-- [ ] **`set_project` method** — we know it exists but haven't tested it.
-      Document the behavior (does it preserve state? how long does reload
-      take? does `ready` fire again?). Add to sdk-methods.md and
-      limitations-and-workarounds.md.
+- [x] **`set_project` method** — documented in sdk-methods.md and limitations-and-workarounds.md (app mode only, closes views, fires `project_changed`).
 
-- [ ] **Event catalog** — we only documented `ready` and `click_attributes`.
-      The SDK likely has more events (`view_added`, `view_removed`,
-      `language_change`, etc.). Probe the SDK source or test empirically
-      and expand the events section in sdk-methods.md.
+- [x] **Event catalog** — full events catalog added to sdk-methods.md (`view_added`, `view_removed`, `view_filter`, `layers_ordered`, `language_change`, `project_changed`, `mapx_connected`, etc.).
 
-- [ ] **`get_views` response shape** — we use this in probe-views.html but
-      haven't documented the full return object structure. Add example
-      output to sdk-methods.md.
+- [x] **`get_views` response shape** — documented with full example object structure in sdk-methods.md.
 
-- [x] **`set_panel_left_visibility`** — now documented in sdk-methods.md.
+- [x] **`set_panel_left_visibility` & Panels API** — documented in sdk-methods.md and ui-and-modals.md.
 
-- [ ] **Static mode** — the Manager constructor accepts `static: true` to
-      load a lighter MapX page. Document what features are available/missing
-      in static mode.
+- [x] **Static mode** — documented in initialization.md and limitations-and-workarounds.md (loads `/static.html`, no user auth or Shiny, `get_views_with_visible_layer` instead of `get_views_id_open`).
 
-- [ ] **Additional Mapbox passthrough methods** — we wrap a handful but the
-      full Mapbox GL JS API is available. Consider documenting the most
-      useful ones: `setCenter`, `setBearing`, `setPitch`, `fitBounds`,
-      `querySourceFeatures`, `getStyle`, `setPaintProperty`.
+- [x] **Additional MapLibre passthrough methods** — documented in sdk-methods.md.
 
 ## Skill refinements
 
@@ -101,12 +115,9 @@
       marketplace and plugin live together. Remote install works because
       `/plugin marketplace add owner/repo` clones the repo first.
 
-- [ ] **Add `keywords` to marketplace.json plugins array** — currently only
-      in plugin.json, which may not be picked up for marketplace search.
+- [x] **Add `keywords` to marketplace.json plugins array** — added matching plugin.json keywords.
 
-- [ ] **Add AGENTS.md at repo root** — Mapbox uses this as an AI-readable
-      index of all skills. Helps agents understand what's available without
-      reading every SKILL.md.
+- [x] **Add AGENTS.md at repo root** — added machine-readable agent index.
 
 ## Documentation fixes
 
@@ -132,9 +143,7 @@
       per click with `{part, nPart, idView, attributes, point, lngLat}`. Batch-collect
       until `parts.size === nPart`. Updated in sdk-methods.md Events section.
 
-- [ ] **Add concrete numeric filter fallback example** — the dual-parameter
-      ambiguity (`from`/`to` vs `value`) needs a commented-out alternative
-      form so the LLM can generate either pattern.
+- [x] **Add concrete numeric filter fallback example** — documented `{from, to}` vs `{value}` dual support in sdk-methods.md and filtering-and-data.md.
 
 - [x] **Fix `toCleanGeoJSON` function** — renamed to `cleanFeatures` with
       a note about wrapping in FeatureCollection if needed.
@@ -142,37 +151,20 @@
 - [x] **Add MultiPolygon note to point-in-polygon** — added comment noting
       Polygon-only and how to handle MultiPolygon.
 
-- [ ] **Document `findNearestFeature` tolerance units** — the default `0.5`
-      is in degrees (~55km at equator). Add a comment explaining this and
-      that it should be calibrated to zoom level.
+- [x] **Document `findNearestFeature` tolerance units** — added comment explaining tolerance is in geographic degrees (~55km at equator).
 
-- [ ] **Add `askWithTimeout` to scaffold template** — the scaffold's
-      `client.js` is missing this resilience pattern that the reference
-      skill documents as essential.
+- [x] **Add `askWithTimeout` to scaffold template** — added defensive timeout wrapper to client.js in embed-scaffold.md.
 
-- [ ] **Add `map_wait_idle()` to scaffold's `main.js`** — the scaffold
-      template doesn't include this critical sequencing call.
+- [x] **Add `map_wait_idle()` to scaffold's `main.js`** — added sequencing call in embed-scaffold.md.
 
-- [ ] **Add CSP/iframe guidance to initialization.md** — if the embedding
-      page has restrictive Content-Security-Policy headers, the MapX iframe
-      won't load. Note that `frame-src https://app.mapx.org` is needed.
+- [x] **Add CSP/iframe guidance to initialization.md** — documented required CSP headers (`frame-src https://app.mapx.org`).
 
-- [ ] **Clarify `set_vector_highlight` vs `set_vector_spotlight`** — the
-      skill mentions the newer name but doesn't provide an example. Show
-      both or recommend one.
+- [x] **Clarify `set_vector_highlight` vs `set_vector_spotlight`** — documented `set_vector_spotlight` as preferred, noting `set_vector_highlight` as deprecated.
 
 ## Broader improvements
 
-- [ ] **Version tracking** — the MapX SDK doesn't version its UMD bundle.
-      If methods change or break, we need a way to note which SDK
-      version the skills were validated against. Consider adding a
-      "last validated" date to each reference file.
+- [x] **Version tracking** — updated across files to validate against deployed `v1.14.0-fix.1` (August 2026).
 
-- [ ] **Community contribution template** — if others start using this,
-      add a CONTRIBUTING.md explaining how to add new methods or
-      document new limitations they discover.
+- [x] **Community contribution template** — added CONTRIBUTING.md.
 
-- [ ] **Add `safeViewAdd` verification pattern** — `view_add` silent failures
-      are the most common gotcha but there's no defensive pattern documented.
-      Add a helper that calls `get_views_id_open` after `view_add` to verify
-      the view actually loaded.
+- [x] **Add `safeViewAdd` verification pattern** — added helper using `mapx.on("view_added")` with timeout in limitations-and-workarounds.md.
