@@ -47,7 +47,7 @@ const center = await mapx.ask("map", { method: "getCenter" });
 
 ## Projections
 
-Toggle between Mercator (default) and Globe projections via the Mapbox
+Toggle between Mercator (default) and Globe projections via the MapLibre
 GL JS passthrough:
 
 ```javascript

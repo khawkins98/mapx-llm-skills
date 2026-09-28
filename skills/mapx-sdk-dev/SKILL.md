@@ -8,6 +8,11 @@ description: >
   GL JS passthrough pattern, GeoJSON overlays, filtering, data export,
   and known limitations.
 allowed-tools:
+  - Read
+  - Edit
+  - Write
+  - Grep
+  - Glob
   - WebFetch(domain:app.mapx.org)
   - WebFetch(domain:github.com)
   - WebFetch(domain:raw.githubusercontent.com)
@@ -66,7 +71,7 @@ or any non-serializable value through the bridge. See
 
 - [sdk-methods.md](sdk-methods.md) — Resolver catalog with signatures, return types, and usage notes
 - [initialization.md](initialization.md) — Manager constructor, project setup, iframe configuration
-- [views-and-layers.md](views-and-layers.md) — View lifecycle, GeoJSON views, Mapbox passthrough, layer ordering
+- [views-and-layers.md](views-and-layers.md) — View lifecycle, GeoJSON views, MapLibre passthrough, layer ordering
 - [navigation-and-display.md](navigation-and-display.md) — Camera control, projections, 3D modes, country navigation
 - [filtering-and-data.md](filtering-and-data.md) — Numeric/text filters, transparency, data introspection, export
 - [ui-and-modals.md](ui-and-modals.md) — Language, themes, dashboards, modals, vector highlight

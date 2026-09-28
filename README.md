@@ -152,7 +152,7 @@ If you're working on the skill content in this repo:
 - **SDK source**: https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk
 - **UMD script**: `https://app.mapx.org/sdk/mxsdk.umd.js`
 - **Communication**: postMessage bridge (serialized JSON only)
-- **Map engine**: Mapbox GL JS (wrapped by MapX, accessible via passthrough)
+- **Map engine**: MapLibre GL JS (wrapped by MapX, accessible via passthrough, compatible with Mapbox GL JS v1 API)
 
 ### SDK Architecture
 
@@ -175,7 +175,7 @@ The MapX SDK uses a **resolver pattern**:
 ### Key Limitations
 
 - **Cross-project scope**: `view_add` only works for views in the connected project
-- **No native events**: Parent page can't listen to Mapbox `moveend`, `zoomend`, etc.
+- **No native events**: Parent page can't listen to MapLibre `moveend`, `zoomend`, etc.
 - **No click callbacks on passthrough layers**: `map.on("click", ...)` not possible
 - **No `toggle_draw_mode`**: Was removed from the SDK after 2020; even when it existed, it returned only a boolean and couldn't pass drawn geometry back to the parent page
 - **Serialization boundary**: Everything through postMessage must be JSON-serializable

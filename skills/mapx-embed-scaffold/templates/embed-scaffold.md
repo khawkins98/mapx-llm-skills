@@ -130,15 +130,16 @@ export function getSDK() {
  */
 export function askWithTimeout(method, data = {}, timeoutMs = 8000) {
   const sdk = getSDK();
-  return Promise.race([
-    sdk.ask(method, data),
-    new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`MapX ask("${method}") timed out after ${timeoutMs}ms`)),
-        timeoutMs
-      )
-    ),
-  ]);
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`MapX ask("${method}") timed out after ${timeoutMs}ms`)),
+      timeoutMs
+    );
+  });
+  return Promise.race([sdk.ask(method, data), timeoutPromise]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 ```
 
@@ -214,24 +215,33 @@ import { CURATED_VIEWS } from "../config/views.js";
 import * as store from "../state/store.js";
 import { viewAdd, viewRemove } from "../sdk/views.js";
 
+const buttonsByViewId = new Map();
+
 export function buildViewButtons() {
   const container = document.getElementById("view-buttons");
   if (!container) return;
-  container.innerHTML = "";
 
-  CURATED_VIEWS.forEach((v) => {
-    const btn = document.createElement("button");
-    btn.textContent = v.label;
-    btn.title = v.id;
-    if (store.openViews.has(v.id)) {
-      btn.classList.add("is-active");
-    }
-    btn.addEventListener("click", () => toggleView(v.id));
-    container.appendChild(btn);
-  });
+  // Initialize button elements once to avoid destroying DOM state
+  if (buttonsByViewId.size === 0) {
+    container.innerHTML = "";
+    CURATED_VIEWS.forEach((v) => {
+      const btn = document.createElement("button");
+      btn.textContent = v.label;
+      btn.title = v.id;
+      btn.addEventListener("click", () => toggleView(v.id, btn));
+      container.appendChild(btn);
+      buttonsByViewId.set(v.id, btn);
+    });
+  }
+
+  // Synchronize active states with store
+  for (const [id, btn] of buttonsByViewId.entries()) {
+    btn.classList.toggle("is-active", store.openViews.has(id));
+  }
 }
 
-async function toggleView(idView) {
+async function toggleView(idView, btn) {
+  if (btn) btn.disabled = true;
   try {
     if (store.openViews.has(idView)) {
       await viewRemove(idView);
@@ -240,6 +250,8 @@ async function toggleView(idView) {
     }
   } catch (err) {
     console.error(`Failed to toggle view ${idView}:`, err);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 ```

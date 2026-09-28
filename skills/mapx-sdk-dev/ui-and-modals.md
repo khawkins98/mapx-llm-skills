@@ -122,7 +122,7 @@ await mapx.ask("reset_highlighter");
 
 ### Country Basemap Highlighting (`set_country_highlight`)
 
-Highlight specific countries on the basemap by graying out all other countries. Accepts ISO 3166-1 alpha-3 codes:
+Highlight specific countries on the basemap by graying out all other countries. Unlike resolvers expecting an options dictionary, `set_country_highlight` accepts an `Array<string>` of ISO 3166-1 alpha-3 codes directly:
 
 ```javascript
 await mapx.ask("set_country_highlight", ["FRA", "DEU", "ESP"]);

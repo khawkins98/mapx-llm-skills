@@ -63,8 +63,9 @@ async function toggleView(idView) {
 
 To synchronously query all active view layers at any point:
 ```javascript
-const visible = await mapx.ask("get_views_with_visible_layer");
-const visibleIds = new Set(visible.map(v => v.id));
+const visibleIds = await mapx.ask("get_views_with_visible_layer");
+// => ["MX-XXXXX", "MX-YYYYY"]
+const visibleSet = new Set(visibleIds);
 ```
 
 ## GeoJSON Views (SDK-Managed Custom Data)

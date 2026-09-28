@@ -96,7 +96,7 @@ Common issues organized by symptom.
 - Verify paint properties (e.g., `circle-radius` must be > 0)
 - The layer may be underneath other layers — try adding a label layer
   to confirm the source data loaded
-- Check console for errors — invalid Mapbox GL specs throw
+- Check console for errors — invalid MapLibre / Mapbox GL style specs throw
 
 **Symptom**: Layers appear but disappear after zooming or panning.
 

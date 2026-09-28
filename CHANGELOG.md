@@ -21,8 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `askWithTimeout` helper in `embed-scaffold.md` to prevent hanging on resolver drops.
   - Added `map_wait_idle()` sequencing after `ready`.
   - Replaced optimistic store mutations with `view_added` / `view_removed` listeners.
-- **Agent standard**: Added `AGENTS.md` machine-readable skill index at repository root.
+- **Agent standard**: Added `AGENTS.md` machine-readable skill index at repository root and symlinked `CLAUDE.md`.
 - **Security & limits**: Documented `maxSimultaneousRequest: 10` queue limits, `safeViewAdd` pattern, and Content-Security-Policy (CSP) header requirements.
+
+### Fixed
+- **API signatures**: Corrected `get_views_with_visible_layer` return type from object array to string array (`["MX-..."]`), `language_change` payload property to `new_language`, and `set_country_highlight` direct array argument signature.
+- **Tool permissions**: Added `Read`, `Edit`, `Write`, `Grep`, `Glob` to `mapx-sdk-dev/SKILL.md` `allowed-tools` to prevent agent tool lockout.
+- **Promise lifecycle & memory**: Added `clearTimeout` cleanup in `askWithTimeout`, refactored `safeViewAdd` away from async promise executor anti-pattern, and eliminated DOM thrashing in scaffold `view-buttons.js`.
 
 ## [1.1.0] - 2026-04-08
 

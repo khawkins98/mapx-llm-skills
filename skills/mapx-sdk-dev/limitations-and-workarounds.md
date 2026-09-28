@@ -28,8 +28,8 @@ Listen for the SDK's `view_added` event with a fallback timeout to confirm
 whether the view actually loaded:
 
 ```javascript
-async function safeViewAdd(mapx, idView, timeoutMs = 4000) {
-  return new Promise(async (resolve) => {
+function safeViewAdd(mapx, idView, timeoutMs = 4000) {
+  return new Promise((resolve) => {
     let settled = false;
 
     const timer = setTimeout(() => {
@@ -55,7 +55,14 @@ async function safeViewAdd(mapx, idView, timeoutMs = 4000) {
     }
 
     mapx.on("view_added", onAdded);
-    await mapx.ask("view_add", { idView });
+    mapx.ask("view_add", { idView }).catch((err) => {
+      if (!settled) {
+        settled = true;
+        cleanup();
+        console.warn(`view_add rejected for ${idView}:`, err);
+        resolve(false);
+      }
+    });
   });
 }
 ```
@@ -77,14 +84,14 @@ to your project.
 
 ## 2. No Native Map Events
 
-**Problem**: The parent page cannot listen to native Mapbox GL events
+**Problem**: The parent page cannot listen to native MapLibre GL events
 (`moveend`, `zoomend`, `click`, `mousemove`, etc.). The SDK's postMessage
 bridge only supports SDK-defined events (`ready`, `click_attributes`).
 
 > *Evidence*: This follows directly from the SDK's architecture — the `map`
 > resolver only supports calling methods with serializable arguments. The
 > SDK README documents the `on()` method for SDK events but not for
-> Mapbox GL native events. Confirmed by postMessage serialization constraint.
+> MapLibre GL native events. Confirmed by postMessage serialization constraint.
 
 **Why**: `map.on("moveend", callback)` requires passing a function through
 postMessage, which only accepts serializable data.
@@ -109,7 +116,7 @@ pattern doesn't work because callbacks can't be serialized.
 > via passthrough. The `click_attributes` event only fires for MapX-managed
 > views (those added via `view_add` or `view_geojson_create`). This is
 > consistent with the SDK architecture — `click_attributes` is wired to
-> MapX's internal click handler, not to Mapbox GL's event system.
+> MapX's internal click handler, not to MapLibre GL's event system.
 
 **Workaround**: Coordinate matching fallback:
 
@@ -199,11 +206,11 @@ and wheel events through to the iframe for pan/zoom.
 **Problem**: `queryRenderedFeatures` returns features from all rendered
 vector layers, including basemap layers (roads, labels, water boundaries).
 
-> *Note*: This is standard Mapbox GL JS behavior, not a MapX limitation.
+> *Note*: This is standard MapLibre GL JS behavior, not a MapX limitation.
 > The `layers` option can filter results to specific layer IDs.
 
 **Workaround**: Filter results by layer ID prefix. MapX view layers follow
-naming conventions; basemap layers use Mapbox default names:
+naming conventions; basemap layers use MapLibre / OpenMapTiles default names:
 
 ```javascript
 function filterBasemapFeatures(features) {
@@ -225,7 +232,7 @@ through postMessage.
 > query highlight layers. Pre-checking with `getLayer` before `removeLayer`
 > was abandoned because the serialized return was unreliable. The try/catch
 > approach below was adopted instead. This may be related to how the
-> structured clone algorithm serializes Mapbox GL's internal `StyleLayer`
+> structured clone algorithm serializes MapLibre GL's internal `StyleLayer`
 > objects.
 
 **Workaround**: Don't pre-check existence. Instead, use try/catch around
@@ -294,8 +301,8 @@ normally), the SDK's `FrameManager` error-handling path removes the
 request from its queue but **never resolves or rejects the Promise**.
 Your `await mapx.ask(...)` call hangs forever.
 
-> *Evidence*: Confirmed in the SDK source (`frameManager.js` on GitHub
-> `master`). The hang was observed in practice on 2026-03-19 when calling
+> *Evidence*: Confirmed in the SDK source (`frameManager.js`, lines 375–380 on
+> GitHub `main` branch). The hang was observed in practice on 2026-03-19 when calling
 > `get_view_source_summary` on raster views — a timeout was added
 > reactively in commit `e77a752` of `mapx-demo-embed` with message
 > *"Timeouts on SDK calls that hang for raster views"*. The SDK source
@@ -304,20 +311,24 @@ Your `await mapx.ask(...)` call hangs forever.
 
 **Why**: In `frameManager.js`, the response handler only calls
 `req.onResponse(message.value)` when `message.success` is `true`. When
-`success` is `false`, the request is cleaned up but the Promise callback
-is never invoked.
+`success` is `false`, the request is cleaned up from internal state but
+`req.onError` is never invoked, leaving the Promise unfulfilled.
 
 **Workaround**: Wrap any `ask()` call that might trigger an exception
-with a timeout:
+with a timeout that clears upon settlement:
 
 ```javascript
 function askWithTimeout(mapx, resolver, opt, ms = 15000) {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${resolver} timed out`)), ms);
+  });
   return Promise.race([
     mapx.ask(resolver, opt),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`${resolver} timed out`)), ms)
-    ),
-  ]);
+    timeoutPromise,
+  ]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 ```
 

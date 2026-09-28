@@ -63,9 +63,9 @@ Get or set the current visible bounding box as `[west, south, east, north]`.
 const bounds = await mapx.ask("map_get_bounds_array");
 // => [-75.2, 17.5, -68.8, 19.9]
 
+// Sets max/fit bounds immediately (accepts bounds array only):
 await mapx.ask("map_set_bounds_array", {
   bounds: [-75.2, 17.5, -68.8, 19.9],
-  options: { padding: 20, duration: 1500 },
 });
 ```
 
@@ -237,11 +237,10 @@ const ids = await mapx.ask("get_views_id_open");
 
 ### get_views_with_visible_layer (Static & App Mode)
 
-Returns the list of views that currently have active, visible layers on the map.
+Returns an array of view ID strings that currently have active, visible layers on the map.
 
 ```javascript
-const visibleViews = await mapx.ask("get_views_with_visible_layer");
-const visibleIds = visibleViews.map((v) => v.id);
+const visibleIds = await mapx.ask("get_views_with_visible_layer");
 // => ["MX-XXXXX", "MX-YYYYY"]
 ```
 
@@ -510,8 +509,11 @@ await mapx.ask("reset_highlighter");
 
 Highlights specified countries on the basemap by graying out all other countries.
 
+> [!NOTE]
+> Unlike most resolvers that accept an options object, `set_country_highlight` expects the array of ISO 3166-1 alpha-3 country code strings passed directly as its argument.
+
 ```javascript
-// Accepts ISO 3166-1 alpha-3 country codes:
+// Accepts ISO 3166-1 alpha-3 country codes directly as an Array<string>:
 await mapx.ask("set_country_highlight", ["KEN", "UGA", "TZA"]);
 ```
 
@@ -711,22 +713,32 @@ mapx.on("view_legend_updated", () => {
 });
 
 // --- 4. Feature Inspection ---
-mapx.on("click_attributes", (data) => {
-  // Fires ONCE PER OPEN VT VIEW per map click.
+// Fires ONCE PER OPEN VT VIEW per map click.
+// Use a Map to aggregate feature attributes across all open views:
+const clickBatch = new Map();
+
+mapx.on("click_attributes", ({ part, nPart, idView, attributes, lngLat, point }) => {
   // Payload:
-  // {
   //   part:       number,       // 1-indexed position in batch
   //   nPart:      number,       // total open VT views expected
   //   idView:     string,       // view ID
   //   attributes: [],           // feature attributes at click point
   //   point:      { x, y },     // pixel coordinates
   //   lngLat:     { lng, lat }  // geographic coordinates
-  // }
+  if (attributes && attributes.length > 0) {
+    clickBatch.set(idView, attributes);
+  }
+  if (part === nPart) {
+    // All view parts for this click have arrived
+    console.log("All click attributes collected:", clickBatch, lngLat);
+    clickBatch.clear();
+  }
 });
 
 // --- 5. Application State ---
-mapx.on("language_change", ({ lang }) => {
-  // Fires when the UI language changes.
+mapx.on("language_change", ({ new_language }) => {
+  // Fires when the UI language changes (payload: { new_language: string }).
+  console.log("Language updated:", new_language);
 });
 
 mapx.on("project_changed", ({ new_project, old_project }) => {
