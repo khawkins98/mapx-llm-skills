@@ -5,6 +5,13 @@
 Only works on `vt` (vector tile) views. Raster and custom-coded views
 don't have queryable attribute tables.
 
+> **Mode matters.** In app mode (the default) the filter resolvers drive the
+> view's own filter widgets and read only `value`. In static mode they build
+> the filter directly from `from`/`to` (numeric) or `values` + `attribute`
+> (text). The examples below send both forms so they work in either mode.
+> See [sdk-methods.md](sdk-methods.md#set_view_layer_filter_numeric) for the
+> full table.
+
 ### Workflow: Discover attributes → Get range → Apply filter
 
 ```javascript
@@ -14,33 +21,43 @@ const config = await mapx.ask("get_view_table_attribute_config", {
 });
 // => { attributes: ["population", "area_km2", "risk_score"], ... }
 
-// Step 2: Get min/max range for an attribute
-await mapx.ask("map_wait_idle");
+// Step 2: Get min/max for an attribute
 const summary = await mapx.ask("get_view_source_summary", {
   idView: "MX-XXXXX",
   idAttr: "population",
-  stats: ["base"],
 });
-// => { count: 245, min: 1200, max: 48000000 }
+const { min, max } = summary.attribute_stat;
 
-// Step 3: Apply filter
+// Step 3: Apply filter (portable form)
+const range = [1000000, 50000000];
 await mapx.ask("set_view_layer_filter_numeric", {
   idView: "MX-XXXXX",
-  attribute: "population",
-  from: 1000000,
-  to: 50000000,
+  value: range,          // app mode
+  from: range[0],        // static mode
+  to: range[1],
+  attribute: "population", // static mode only
 });
 
-// Step 4: Clear filter
+// Step 4: "Clear" = reset to the full range (null is not a clear)
 await mapx.ask("set_view_layer_filter_numeric", {
   idView: "MX-XXXXX",
+  value: [min, max],
+  from: min,
+  to: max,
   attribute: "population",
-  from: null,
-  to: null,
 });
 ```
 
-**Note**: Both `{ idView, from, to }` and `{ idView, value: [min, max] }` syntax are supported. Passing `value` automatically derives `from = Math.min(...value)` and `to = Math.max(...value)`.
+**App-mode snapping**: the app-mode slider snaps to steps of
+`(min + max) / 1000`, so ranges are approximate (`[20000, 100000]` became
+`19927.70–99945.08`), and a range narrower than one step collapses to a
+single value. `get_view_layer_filter_numeric` returns strings in app mode.
+
+**App-mode limitation**: the app-mode slider always filters the view's
+**styled** attribute (`view.data.attribute.name`). `attribute` is ignored,
+so filtering a *different* numeric column only works in static mode. In app
+mode, use `set_highlighter` with a MapLibre expression to emphasise features
+by another attribute instead.
 
 ## Text/Category Filters
 
@@ -58,32 +75,50 @@ const data = await mapx.ask("get_view_table_attribute", {
 // Extract unique categories
 const categories = [...new Set(data.map(row => row.category))];
 
-// Step 2: Filter to specific categories
+// Step 2: Filter to specific categories (portable form)
+const selected = ["Significant increase", "Moderate increase"];
 await mapx.ask("set_view_layer_filter_text", {
   idView: "MX-XXXXX",
-  value: ["Significant increase", "Moderate increase"],
+  value: selected,        // app mode
+  values: selected,       // static mode
+  attribute: "category",  // static mode: must be explicit (upstream bug otherwise)
 });
 
 // Clear filter
 await mapx.ask("set_view_layer_filter_text", {
   idView: "MX-XXXXX",
-  value: "",
+  value: [],
+  values: [],
+  attribute: "category",
 });
 ```
 
+Alternatively, filter through the legend with `get_view_legend_values` /
+`set_view_legend_state` (see [sdk-methods.md](sdk-methods.md)).
+
 ## Transparency
 
-0 = fully opaque, 100 = fully invisible. Essential for multi-layer
-stacking (overlaying hazard maps on top of each other).
+Essential for multi-layer stacking (overlaying hazard maps on top of each
+other). **The scale depends on the mode:**
+
+- **App mode**: `value` drives the view's transparency slider:
+  0 = fully opaque, 100 = fully invisible.
+- **Static mode**: the resolver writes the number straight into the
+  layers' MapLibre `*-opacity` paint properties, so it is an **opacity
+  from 0 to 1** (1 = opaque). It reads `opacity` if present, otherwise
+  `value`. Sending `value: 50` in static mode is not "50% transparent".
 
 ```javascript
-// Set
+// Portable: 40% transparent in either mode
+const transparency = 40; // 0..100
 await mapx.ask("set_view_layer_transparency", {
   idView: "MX-XXXXX",
-  value: 50,
+  value: transparency,             // app mode (0..100 transparency)
+  opacity: 1 - transparency / 100, // static mode (0..1 opacity)
 });
 
-// Read current
+// Read current: returns stored OPACITY (0..1), not transparency.
+// In static mode it echoes whatever number was last passed.
 const t = await mapx.ask("get_view_layer_transparency", {
   idView: "MX-XXXXX",
 });
@@ -116,15 +151,15 @@ const rows = await mapx.ask("get_view_table_attribute", {
 ### Statistical summary
 
 ```javascript
-await mapx.ask("map_wait_idle"); // REQUIRED first
-
+// Source statistics are computed server-side from the view's source, so
+// they don't depend on what is rendered.
 const summary = await mapx.ask("get_view_source_summary", {
   idView: "MX-XXXXX",
   idAttr: "population",       // optional: specific attribute
   stats: ["base", "attributes"],
 });
-// Base: { count, min, max, mean }
-// Attributes: category distributions, histograms
+// => { attributes, attributes_types, row_count,
+//      attribute_stat: { attribute, min, max, ... }, extent_sp, ... }
 ```
 
 ## Data Export
@@ -132,7 +167,7 @@ const summary = await mapx.ask("get_view_source_summary", {
 `download_view_source_geojson` is intended for GeoJSON views created via
 `view_geojson_create`. For native views, the SDK provides
 `download_view_source_vector` and `download_view_source_external`
-(not yet documented in this skill).
+(see [sdk-methods.md](sdk-methods.md#download_view_source_vector--download_view_source_external--download_view_source_raster)).
 
 ```javascript
 const geojson = await mapx.ask("download_view_source_geojson", {

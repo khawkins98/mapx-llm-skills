@@ -55,8 +55,9 @@ project-root/
 1. **SDK wrappers are thin**: One function per resolver, returns the
    Promise directly. Group by theme (views, filters, ui, map-control).
 
-2. **State lives in store.js**: Track openViews as a `Set`, custom data
-   in an array registry. Use setter functions for live module bindings.
+2. **State lives in store.js**: Track `openViews` as a `Set`, updated only
+   from SDK events. Add further shared state (e.g. a custom-data registry)
+   there as the project grows.
 
 3. **UI modules are self-contained**: Each module owns its DOM elements
    and event listeners. Import SDK wrappers and store, export an
@@ -65,6 +66,21 @@ project-root/
 4. **Comments are thorough**: Document SDK method names, parameter
    shapes, return types, and known gotchas inline. This codebase will
    be used as a reference for production implementations.
+
+5. **Every `ask()` goes through `askWithTimeout`**: resolver failures and
+   unknown resolvers never settle the SDK promise. The wrapper fails fast
+   on the worker's `err_resolver_*` messages and times out otherwise.
+
+6. **State follows events, not calls**: `openViews` is updated only from
+   `view_added` / `view_removed`, and seeded from
+   `get_views_with_visible_layer` on `ready`.
+
+7. **Static mode by default** (`STATIC_MODE = true` in `client.js`), as
+   upstream recommends. Filter and transparency wrappers send both the
+   app-mode and static-mode parameter forms, so flipping the flag doesn't
+   break them. Switch to app mode only if the user needs app-only
+   resolvers (`set_project`, login, view-list management); those hang in
+   static mode.
 
 ## Template
 
@@ -75,8 +91,8 @@ complete file templates with boilerplate code.
 
 1. Read the user's project ID from `$ARGUMENTS`
 2. If view IDs are provided, include them in `config/views.js`
-3. If no views are given, add a `get_views()` discovery call in main.js
-   that logs available views
+3. If no views are given, leave `CURATED_VIEWS` empty: the template's
+   `main.js` then runs in discovery mode and logs the project's views
 4. Generate all files following the architecture rules above
 5. Verify: `npm install && npm run build` should succeed
 6. Tell the user to run `npm run dev` and open the local URL

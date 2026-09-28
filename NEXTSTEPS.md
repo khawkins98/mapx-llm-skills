@@ -21,6 +21,33 @@
    then `npm install && npm run build` to verify the generated project
    compiles. Try `npm run dev` and confirm the iframe loads.
 
+## Runtime verification (1.14)
+
+Done 2026-09-28 with `tests/runtime/` (static + app mode, headless):
+
+- [x] **Cross-project `view_add`**: public views from other projects load;
+      bogus IDs hang (`View not found`). `view_added` re-fires for open views.
+- [x] **Numeric filter**: `{from, to}` is a no-op in app mode; `value`
+      works in both. Found: app-mode slider snapping, string getter values.
+- [x] **Text filter**: static needs `values` + `attribute`; omitting
+      `attribute` hangs (TDZ bug reproduced). App mode: `values`-only clears.
+- [x] **Transparency**: static treats the number as 0–1 opacity (`50` is rejected).
+- [x] **`too_many_request`**: rejected request still executes.
+- [x] **Time filter in app mode**: needs `value`.
+- [x] **`getProjection()` on a fresh map**: `undefined`. String
+      `setProjection("globe")` is silently ignored.
+- [x] Found: `map_fly_to` > 10 s hangs; `set_project` can stay pending;
+      inaccessible `project=` silently loads HOME; headless works from a
+      secure context (`http://localhost`).
+
+Still open:
+
+- [ ] **Non-public view from another project**: no fixture was available.
+      Find a view whose `readers` excludes `public` and add it to `run.mjs`.
+- [ ] **Logged-in behaviour** (`set_project` to a private project, app-only
+      user resolvers): needs a test account.
+- [ ] **Re-run `tests/runtime` on each MapX release** and diff the results JSON.
+
 ## Content gaps to fill
 
 - [x] **`set_project` method** — documented in sdk-methods.md and limitations-and-workarounds.md (app mode only, closes views, fires `project_changed`).

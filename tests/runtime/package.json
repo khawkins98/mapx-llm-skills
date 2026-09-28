@@ -1,0 +1,12 @@
+{
+  "name": "mapx-runtime-verification",
+  "private": true,
+  "type": "module",
+  "description": "Runtime checks of MapX SDK behaviour documented in the skills. Not part of the skills themselves.",
+  "scripts": {
+    "verify": "node run.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}

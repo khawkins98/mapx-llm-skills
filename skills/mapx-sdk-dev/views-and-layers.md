@@ -35,7 +35,11 @@ view_remove(idView)       → Fires "view_remove", then "view_removed" when unlo
 
 ### Event-Driven State Tracking (Recommended)
 
-Because `view_add` fails silently if an ID does not belong to the active project, tracking state via SDK events is more reliable than optimistic local mutation:
+`view_add` can fail without rejecting (it resolves `undefined`, or never
+settles; see [sdk-methods.md](sdk-methods.md#view_add)). Views can also be
+opened or closed by the user inside MapX, or by the startup `views` param.
+Tracking state from SDK events is therefore more reliable than updating it
+optimistically:
 
 ```javascript
 export const openViews = new Set();
@@ -51,17 +55,18 @@ mapx.on("view_removed", ({ idView }) => {
   updateUI();
 });
 
-// To toggle:
+// To toggle (askWithTimeout: limitations §9):
 async function toggleView(idView) {
   if (openViews.has(idView)) {
-    await mapx.ask("view_remove", { idView });
+    await askWithTimeout(mapx, "view_remove", { idView });
   } else {
-    await mapx.ask("view_add", { idView });
+    const ok = await askWithTimeout(mapx, "view_add", { idView });
+    if (ok !== true) console.warn(`view_add failed for ${idView}`);
   }
 }
 ```
 
-To synchronously query all active view layers at any point:
+To query which views currently have layers on the map (one async call, top-most first):
 ```javascript
 const visibleIds = await mapx.ask("get_views_with_visible_layer");
 // => ["MX-XXXXX", "MX-YYYYY"]

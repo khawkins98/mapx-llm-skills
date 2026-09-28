@@ -21,13 +21,13 @@ When generating code or advising users on MapX SDK development:
 
 1. **Target SDK Build**: Targets `app.mapx.org/sdk/mxsdk.umd.js` and `mxsdk.modern.js` (`v1.14.0-fix.1`).
 2. **Resolver Pattern via postMessage**: All interactions with MapX run through `mapx.ask("resolver_name", { params })` and return Promises. Callbacks, functions, and DOM elements cannot be passed across the bridge.
-3. **Underlying Engine**: MapX uses **MapLibre GL JS** (compatible with Mapbox GL JS v1 API). The `"map"` resolver exposes map instance methods (`mapx.ask("map", { method: "...", parameters: [...] })`).
-4. **Sequencing & Idle**: Always await `mapx.on("ready")` before any `ask()` calls, and await `mapx.ask("map_wait_idle")` before data introspection, dashboards, or filtering.
-5. **View Scope**: View IDs (`MX-...`) belong to specific projects. Calling `view_add` with an ID from a different project fails silently without throwing an error. Always verify using the `safeViewAdd` pattern or listen to `mapx.on("view_added")`.
-6. **Request Concurrency**: The SDK defaults to `maxSimultaneousRequest: 10`. Calling `Promise.all` across more than 10 unresolved promises will trigger `too_many_request`. Batch or raise this option in `new Manager()`.
+3. **Underlying Engine**: MapX uses **MapLibre GL JS v5** (since 1.14; it was Mapbox GL JS v2 through 1.13.x). Passthrough calls must use MapLibre v5 signatures — e.g. `setProjection({ type: "globe" })`, not `setProjection("globe")`. The `"map"` resolver exposes map instance methods (`mapx.ask("map", { method: "...", parameters: [...] })`).
+4. **Sequencing & Idle**: Always wait for `mapx.on("ready")` before any `ask()` call. `map_wait_idle` only waits while the camera is **moving** (it resolves immediately otherwise, and does not wait for tiles), so call it after a camera move and before rendered-data queries. To wait for a view to load, listen for `view_added`.
+5. **View Scope & `view_add` results** (runtime-verified on 1.14): **public views from other projects load**. `view_add` fetches unknown IDs from the API, resolves `true`, and `view_added` fires. (On 1.13.19 they did nothing.) A non-existent ID **never settles** (`err_resolver_failed`: `View not found`), and a failed add resolves `undefined`. Check `=== true`, guard with a timeout, and confirm with `safeViewAdd` / `view_added`. An inaccessible `project=` URL param silently loads the HOME project instead.
+6. **Request Concurrency**: `maxSimultaneousRequest` defaults to 10. A call made while more than 10 requests are pending (i.e. the 12th) is rejected with the string `too_many_request <n>. Max= <m>`, **but the request is still sent and executed**. Never blindly retry side-effecting calls after this rejection. Throttle, or raise the option in `new Manager()`.
 7. **Spotlight & Feature Highlighting**: Use `set_vector_spotlight` instead of the deprecated `set_vector_highlight`.
-8. **Static Mode Differences**: With `static: true` (or `/static.html`), `get_views_id_open` does not exist. Use `get_views_with_visible_layer` instead.
-9. **Unresolved Resolver Errors**: `FrameManager` never rejects failed requests on internal resolver errors; use `askWithTimeout` to guard against hanging promises.
+8. **Static vs App Mode**: Upstream recommends `static: true` for most embeds. App-only resolvers (`get_views_id_open`, `set_project`, `get_projects`, `table_editor_*`, `move_view_*`, …) **hang** in static mode (they don't reject). The numeric/text filters and transparency read **different params per mode**: app mode reads `value`; static reads `from`/`to` (numeric), `values` + `attribute` (text), or `opacity` 0–1 (transparency; app mode's `value` is 0–100 transparency). Send both forms for portable code.
+9. **Unresolved Resolver Errors**: `FrameManager` never settles a request whose resolver failed or doesn't exist. Use `askWithTimeout` (which also listens on `mapx.on("message")` for `err_resolver_*` to fail fast) to guard against hanging promises.
 10. **Removed Resolvers**: `toggle_draw_mode` was removed from the SDK after 2020 — do not document or use it.
 
 ## Plugin Architecture
@@ -58,6 +58,9 @@ skills/
 ## Editing Guidelines
 
 - When editing skill content, verify all code examples against the patterns above — silent failures and removed methods are the primary defect vector.
+- Verify resolver behaviour against the upstream source (`unep-grid/mapx`, `app/src/js/sdk/src/mapx_resolvers/`), and say explicitly whether a claim was **runtime-tested** or **read from source**.
+- For runtime claims, add or extend a check in `tests/runtime/run.mjs` (Playwright against the live app.mapx.org, both modes) and re-run it on each MapX release.
+- Run `scripts/check-resolvers.sh` after adding or renaming any `ask("…")` call; it fails if a documented resolver doesn't exist upstream.
 - Keep examples compact and copy-pasteable.
 - The `README.md` mirrors key facts from the skills; keep it in sync when skill content changes.
 - Track updates in `CHANGELOG.md` under `[Unreleased]` or the release version heading.
