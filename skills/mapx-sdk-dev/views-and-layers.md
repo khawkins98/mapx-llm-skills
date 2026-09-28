@@ -28,26 +28,43 @@ styled layer with metadata, access control, and optional dashboards.
 ## View Lifecycle
 
 ```
-view_add(idView)          → View appears on map
+view_add(idView)          → Fires "view_add", then "view_added" when rendered
   ↕ (user interacts)
-view_remove(idView)       → View disappears from map
+view_remove(idView)       → Fires "view_remove", then "view_removed" when unloaded
 ```
 
-Track which views are open in a local `Set` — the SDK doesn't provide a
-cheap synchronous check for "is this view displayed?":
+### Event-Driven State Tracking (Recommended)
+
+Because `view_add` fails silently if an ID does not belong to the active project, tracking state via SDK events is more reliable than optimistic local mutation:
 
 ```javascript
-const openViews = new Set();
+export const openViews = new Set();
 
+// Listen to confirmed MapX lifecycle events
+mapx.on("view_added", ({ idView }) => {
+  openViews.add(idView);
+  updateUI();
+});
+
+mapx.on("view_removed", ({ idView }) => {
+  openViews.delete(idView);
+  updateUI();
+});
+
+// To toggle:
 async function toggleView(idView) {
   if (openViews.has(idView)) {
     await mapx.ask("view_remove", { idView });
-    openViews.delete(idView);
   } else {
     await mapx.ask("view_add", { idView });
-    openViews.add(idView);
   }
 }
+```
+
+To synchronously query all active view layers at any point:
+```javascript
+const visible = await mapx.ask("get_views_with_visible_layer");
+const visibleIds = new Set(visible.map(v => v.id));
 ```
 
 ## GeoJSON Views (SDK-Managed Custom Data)
@@ -69,7 +86,7 @@ const result = await mapx.ask("view_geojson_create", {
 });
 const viewId = result.id;
 
-// Style (Mapbox GL paint properties)
+// Style (MapLibre GL paint properties)
 await mapx.ask("view_geojson_set_style", {
   idView: viewId,
   paint: {
@@ -83,10 +100,10 @@ await mapx.ask("view_geojson_set_style", {
 await mapx.ask("view_geojson_delete", { idView: viewId });
 ```
 
-## Mapbox GL JS Passthrough (Parent-Controlled)
+## MapLibre GL JS Passthrough (Parent-Controlled)
 
 For advanced styling or non-interactive overlays, use the `"map"` resolver
-to call Mapbox GL JS methods directly.
+to call MapLibre GL JS methods directly (MapX uses MapLibre GL JS under the hood).
 
 ```javascript
 // Add source
@@ -145,10 +162,10 @@ try {
 
 ## Choosing Between GeoJSON Views and Passthrough
 
-| Aspect | GeoJSON View | Mapbox Passthrough |
+| Aspect | GeoJSON View | MapLibre Passthrough |
 |--------|-------------|-------------------|
 | Click interaction | Native `click_attributes` | Requires coordinate matching fallback |
-| Styling | Limited (SDK paint props) | Full Mapbox GL expressions |
+| Styling | Limited (SDK paint props) | Full MapLibre GL expressions |
 | View list integration | Yes | No — invisible to MapX |
 | Layer ordering | Managed by MapX | You control z-order |
 | Data-driven styling | No | Yes (expressions, interpolation) |
@@ -157,7 +174,7 @@ try {
 | Complexity | Low | Higher |
 
 **Rule of thumb**: Use GeoJSON views when you need click interaction and
-simple styling. Use passthrough when you need advanced Mapbox GL styling
+simple styling. Use passthrough when you need advanced MapLibre GL styling
 or purely visual overlays.
 
 ## Polygon Overlays via Passthrough

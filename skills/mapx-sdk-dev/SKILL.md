@@ -4,13 +4,15 @@ description: >
   Reference skill for developing with the MapX SDK (UNEP/GRID-Geneva).
   Auto-invoked when creating or modifying code that embeds MapX maps,
   manages views, queries geospatial data, or controls the map via the
-  SDK's postMessage bridge. Covers the full SDK resolver API, the Mapbox
+  SDK's postMessage bridge. Covers the full SDK resolver API, the MapLibre
   GL JS passthrough pattern, GeoJSON overlays, filtering, data export,
   and known limitations.
 allowed-tools:
   - WebFetch(domain:app.mapx.org)
   - WebFetch(domain:github.com)
   - WebFetch(domain:raw.githubusercontent.com)
+  - WebFetch(domain:maplibre.org)
+  - WebFetch(domain:docs.mapx.org)
   - WebFetch(domain:docs.mapbox.com)
 ---
 
@@ -21,19 +23,19 @@ via the JavaScript SDK.
 
 ## SDK version context
 
-This skill was developed and tested against the deployed MapX SDK at
-`app.mapx.org/sdk/mxsdk.umd.js` (embedded version string **1.13.19**)
-during **March 2026**. The SDK does not pin versions in its UMD URL, so
-the deployed version may change without notice.
+This skill was validated against the deployed MapX SDK at
+`app.mapx.org/sdk/mxsdk.umd.js` and `app.mapx.org/sdk/mxsdk.modern.js`
+(embedded version string **1.14.0-fix.1**, September 2026; previously
+validated against 1.13.19). The SDK does not pin versions in its CDN URLs,
+so the deployed version may change without notice.
 
-The GitHub source on the `main` branch (`@fxi/mxsdk` 1.9.40-alpha.1)
-does not match the deployed build. Where method signatures or behavior
-differ between the source and what was observed at runtime, this skill
-documents the observed behavior and notes the discrepancy.
+The SDK is developed in the `unep-grid/mapx` repository on GitHub (`main`
+branch) under `app/src/js/sdk`. MapX uses MapLibre GL JS under the hood
+for map rendering and camera control.
 
-If a method documented here doesn't work as described, the deployed SDK
-may have changed. Check the [SDK source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
-(note: default branch is `main`, not `master`).
+If a method documented here doesn't work as described, check the
+[SDK source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
+(default branch `main`).
 
 ## What is MapX?
 
@@ -43,7 +45,9 @@ embedding MapX maps in external websites with programmatic control over
 views, layers, navigation, and data.
 
 - Platform: https://app.mapx.org
+- Documentation: https://docs.mapx.org
 - SDK source: https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk
+- ES6 module: `https://app.mapx.org/sdk/mxsdk.modern.js`
 - UMD script: `https://app.mapx.org/sdk/mxsdk.umd.js`
 - Catalogue search: `search.mapx.org` (MeiliSearch, requires API key -- see limitations §12)
 

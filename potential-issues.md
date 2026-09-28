@@ -3,12 +3,11 @@
 Notes for possible feedback to the MapX SDK maintainers (`unep-grid/mapx`).
 Not filed yet — collecting evidence and refining before submitting.
 
-> **Version context**: All observations are against the deployed UMD at
-> `app.mapx.org/sdk/mxsdk.umd.js` (embedded version string 1.13.19),
-> March 2026. The GitHub `main` branch (the default; `master` is stale)
-> has `@fxi/mxsdk` at 1.9.40-alpha.1 and npm `latest` at
-> 1.13.14-alpha.10 -- none of these match. Line references to the source
-> may not correspond to the maintainers' working tree.
+> **Version context**: All observations were tested against the deployed UMD at
+> `app.mapx.org/sdk/mxsdk.umd.js` (embedded version string 1.13.19 in March 2026,
+> re-verified against 1.14.0-fix.1 in August 2026). The GitHub `main` branch
+> is the active default branch. Line references to the source
+> correspond to `app/src/js/sdk/src/` in the `unep-grid/mapx` repository.
 
 ---
 
@@ -16,7 +15,7 @@ Not filed yet — collecting evidence and refining before submitting.
 
 **Severity**: Bug — causes `ask()` to hang forever.
 
-**Evidence**: Confirmed in `frameManager.js` source on GitHub `master`.
+**Evidence**: Confirmed in `frameManager.js` source on GitHub `main` (lines 201–206).
 The response handler only calls `req.onResponse(message.value)` when
 `message.success` is `true`. There is no `else` branch and no `reject()`
 call. When a resolver throws an exception, the request is removed from the

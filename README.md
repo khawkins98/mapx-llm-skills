@@ -16,7 +16,7 @@ A few examples of things I had to figure out by experimentation:
 
 **A note on accuracy:** I'm relatively new to MapX, and the MapX developers at UNEP/GRID-Geneva will know the platform far better than I do. If you spot something wrong or outdated in these skills, please open an issue — corrections are very welcome.
 
-As of early 2026, MapX doesn't have its own LLM skills or AI coding integrations. [Mapbox has agent skills](https://github.com/mapbox/mapbox-agent-skills) (MapX uses Mapbox GL JS under the hood), so there's precedent for this kind of thing in the geospatial space.
+As of 2026, MapX doesn't have official LLM skills or AI coding integrations. [Mapbox has agent skills](https://github.com/mapbox/mapbox-agent-skills) (MapX uses MapLibre GL JS under the hood, retaining Mapbox GL JS v1 API compatibility), so there's precedent for this kind of thing in the geospatial space.
 
 ## Skills
 
@@ -29,13 +29,14 @@ Both tools auto-detect this skill when working on MapX SDK code. You can also in
 
 Provides:
 
-- Method catalog (30+ resolver methods with signatures and return types)
-- SDK initialization patterns (Manager constructor, singleton, ready event)
-- View management (add/remove, GeoJSON views, Mapbox passthrough, layer ordering)
-- Navigation and display (fly-to, projections, 3D modes, country/region codes)
+- Method catalog (40+ resolver methods with signatures and return types, validated against SDK `v1.14.0-fix.1`)
+- SDK initialization patterns (Manager constructor, ES6 module / UMD, singleton, ready event)
+- View management (add/remove, GeoJSON views, MapLibre passthrough, layer ordering, safeViewAdd)
+- Navigation and display (fly-to, jump-to, bounds, projections, 3D modes, country/region codes)
 - Filtering and data (numeric/text filters, transparency, data introspection, export)
-- UI controls (language, themes, dashboards, map composer, share modal)
-- Known limitations and workarounds (cross-project scope, no native events, click fallbacks)
+- UI controls (language, themes, dashboards, panels API, map composer, share modal)
+- Event catalog (view lifecycle, filters, legends, project changes, network status)
+- Known limitations and workarounds (cross-project scope, concurrency ceiling, click fallbacks)
 - Troubleshooting guide organized by symptom
 
 **Example prompts:**
@@ -288,9 +289,11 @@ As of March 2026, the plugin system is still evolving. Here's where to find curr
 ## Resources
 
 - [MapX Platform](https://app.mapx.org)
+- [MapX Documentation](https://docs.mapx.org)
 - [MapX SDK Source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
 - [MapX GitHub](https://github.com/unep-grid/mapx)
-- [Mapbox GL JS Docs](https://docs.mapbox.com/mapbox-gl-js/api/) (underlying map engine)
+- [MapLibre GL JS Docs](https://maplibre.org/maplibre-gl-js/docs/) (underlying map engine)
+- [Mapbox GL JS Docs](https://docs.mapbox.com/mapbox-gl-js/api/) (API specification reference)
 - [Mapbox Agent Skills](https://github.com/mapbox/mapbox-agent-skills) (similar plugin for the Mapbox ecosystem)
 
 ## License

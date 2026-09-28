@@ -33,6 +33,11 @@ Common issues organized by symptom.
 - MapX app may still be loading views — call `map_wait_idle()` first
 - Check network tab for failing requests to `app.mapx.org`
 
+**Symptom**: SDK call rejects with `too_many_request <nR>. Max= 10`.
+
+- The SDK limits unresolved concurrent requests to `maxSimultaneousRequest` (default 10).
+- **Fix**: Increase `maxSimultaneousRequest: 50` in the `new Manager({...})` constructor, or avoid unthrottled `Promise.all` across large view arrays.
+
 ## view_add Does Nothing
 
 **Symptom**: `view_add` returns without error but the view doesn't appear.
@@ -43,14 +48,15 @@ Common issues organized by symptom.
 - Verify the view ID is correct (check for typos in the MX-XXXXX format)
 - Use `get_views()` to list all views in the current project
 - Check that the view hasn't been unpublished or deleted from MapX
+- **Verification**: Use the `safeViewAdd` pattern or listen to `mapx.on("view_added")`
+  to confirm when the view actually renders.
 
 ## Filters Don't Work
 
 **Symptom**: `set_view_layer_filter_numeric` or `_text` has no visible effect.
 
 - Only works on `vt` (vector tile) views — no effect on raster or cc
-- For numeric: the `from`/`to`/`attribute` form worked in testing but the
-  SDK source documents a `value` param -- try both if one doesn't work
+- For numeric: both `{from, to}` and `{value: [min, max]}` are supported
 - For text: values must exactly match the attribute data (case-sensitive)
 - Call `map_wait_idle()` before applying filters
 - Use `get_view_table_attribute` to verify what values actually exist
@@ -64,8 +70,8 @@ Common issues organized by symptom.
 
 **Symptom**: `click_attributes` never fires when clicking features.
 
-- Ensure `set_vector_highlight({enable: true})` is called after ready
-- Only fires for MapX-managed views (not Mapbox passthrough layers)
+- Ensure `set_vector_spotlight({enable: true})` is called after ready (or deprecated `set_vector_highlight`)
+- Only fires for MapX-managed views (not MapLibre passthrough layers)
 - Check that the view is actually a vector type (`vt`) — **true raster tile**
   views (gridded imagery) don't produce feature attributes; however, some
   views typed as `rt` in the MapX metadata are actually stored internally

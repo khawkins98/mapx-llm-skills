@@ -89,17 +89,44 @@ await mapx.ask("show_modal_share");
 await mapx.ask("close_modal_all");
 ```
 
-## Vector Highlight
+## Vector Spotlight & Highlighting
 
-Enable or disable the visual highlight ring that appears when clicking
-vector features. When enabled, clicking a feature shows a highlight and
-triggers `click_attributes` events.
+### Vector Spotlight (`set_vector_spotlight`)
+
+Enable or disable the visual spotlight ring that appears when clicking vector features. `set_vector_spotlight` is the active method (replacing the deprecated `set_vector_highlight`). When enabled, clicking a feature shows a highlight and triggers `click_attributes` events.
 
 ```javascript
-await mapx.ask("set_vector_highlight", { enable: true });
+await mapx.ask("set_vector_spotlight", { enable: true });
 ```
 
 Best practice: enable this during SDK initialization (in the `ready` handler).
+
+### Feature Highlighter (`set_highlighter`)
+
+Apply programmatically styled highlight outlines to features matching a MapLibre GL filter expression:
+
+```javascript
+// Highlight features with population >= 500,000
+await mapx.ask("set_highlighter", {
+  filters: [
+    {
+      id: "MX-XXXXX-XXXXX-XXXXX",
+      filter: [">=", ["get", "population"], 500000],
+    },
+  ],
+});
+
+// Clear or refresh highlighter
+await mapx.ask("reset_highlighter");
+```
+
+### Country Basemap Highlighting (`set_country_highlight`)
+
+Highlight specific countries on the basemap by graying out all other countries. Accepts ISO 3166-1 alpha-3 codes:
+
+```javascript
+await mapx.ask("set_country_highlight", ["FRA", "DEU", "ESP"]);
+```
 
 ## Legends
 
@@ -151,9 +178,43 @@ const title = getLocalText(meta.title);
 const abstract = getLocalText(meta.abstract);
 ```
 
-## Panel Visibility
+## Panel Controls & Visibility
 
-Control the MapX left panel (view list sidebar):
+### Modern Panels API (`MapxResolversPanels`)
+
+MapX provides fine-grained control over sidebar and control panel drawers:
+
+```javascript
+// Batch update panel visibility and drawer state
+await mapx.ask("panels_batch", {
+  controls_panel: {
+    show: true,
+    open: true,
+  },
+});
+
+// Inspect current panel state
+const state = await mapx.ask("panels_state");
+// => { controls_panel: { hide: false, open: true } }
+
+// List all registered panels
+const panelIds = await mapx.ask("panels_list");
+// => ["controls_panel", "views_panel", ...]
+
+// Bulk drawer controls
+await mapx.ask("panels_close_all");
+await mapx.ask("panels_open_all");
+await mapx.ask("panels_hide_all");
+await mapx.ask("panels_show_all");
+
+// Status inspection
+const isOpen = await mapx.ask("panels_is_open", { id: "controls_panel" });
+const isVisible = await mapx.ask("panels_is_visible", { id: "controls_panel" });
+```
+
+### Legacy Left Panel Visibility
+
+For quick control of the view list left drawer:
 
 ```javascript
 // Show the left panel
@@ -163,5 +224,4 @@ await mapx.ask("set_panel_left_visibility", { show: true });
 await mapx.ask("set_panel_left_visibility", { show: false });
 ```
 
-Most embeds use `closePanels: true` in the constructor to hide this panel
-by default, since the parent page provides its own UI.
+Most embeds pass `closePanels: true` in the constructor options to hide all panels by default, since the embedding application supplies its own custom UI.

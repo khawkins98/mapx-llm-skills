@@ -1,13 +1,12 @@
 # Limitations and Workarounds
 
-> **SDK version context**: These limitations were observed against the
-> deployed MapX SDK at `app.mapx.org/sdk/mxsdk.umd.js` (embedded version
-> string 1.13.19) during March 2026. The SDK does not pin versions in its
-> UMD URL, so behavior may change without notice. The GitHub `main`
-> branch (`@fxi/mxsdk` 1.9.40-alpha.1) does not match the deployed build.
-> Note: the default branch is `main`, not `master` (the `master` branch
-> is stale). Where a limitation contradicts the SDK source or docs, the
-> evidence and reasoning are noted inline.
+> **SDK version context**: These limitations were validated against the
+> deployed MapX SDK at `app.mapx.org/sdk/mxsdk.umd.js` and `mxsdk.modern.js`
+> (embedded version string **1.14.0-fix.1**) in August 2026 (originally
+> observed on 1.13.19). MapX uses MapLibre GL JS under the hood. The SDK
+> does not pin versions in its CDN URLs, so behavior may change without notice.
+> The GitHub default branch is `main`. Where a limitation contradicts the
+> SDK source or docs, the evidence and reasoning are noted inline.
 
 ## 1. Cross-Project View Scope
 
@@ -23,6 +22,43 @@ change.
 
 **Why**: The MapX app inside the iframe only resolves views from its loaded
 project. Cross-project references are silently ignored.
+
+**Defensive verification pattern (`safeViewAdd`)**:
+Listen for the SDK's `view_added` event with a fallback timeout to confirm
+whether the view actually loaded:
+
+```javascript
+async function safeViewAdd(mapx, idView, timeoutMs = 4000) {
+  return new Promise(async (resolve) => {
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        cleanup();
+        console.warn(`view_add timed out for ${idView} -- likely outside connected project`);
+        resolve(false);
+      }
+    }, timeoutMs);
+
+    function onAdded(data) {
+      if (data?.idView === idView && !settled) {
+        settled = true;
+        cleanup();
+        resolve(true);
+      }
+    }
+
+    function cleanup() {
+      clearTimeout(timer);
+      mapx.off("view_added", onAdded);
+    }
+
+    mapx.on("view_added", onAdded);
+    await mapx.ask("view_add", { idView });
+  });
+}
+```
 
 **Workaround for story maps**: Load a second MapX instance in an overlay
 iframe with the target project and `?storyAutoStart=true`:
@@ -84,6 +120,9 @@ pattern doesn't work because callbacks can't be serialized.
 
 ```javascript
 // For points: nearest-neighbor search
+// Note on tolerance: value is in geographic degrees (~0.5° is ~55 km at the equator).
+// For calibrated precision across zoom levels, scale with zoom:
+// const tolerance = 20 / (2 ** zoom);
 function findNearestFeature(clickLng, clickLat, features, tolerance = 0.5) {
   let nearest = null;
   let minDist = Infinity;
@@ -443,3 +482,29 @@ Other language indexes may be available (e.g. `views_fr`). The
 **When to use this vs SDK probe**:
 - MeiliSearch: searching for a dataset by keyword across all projects
 - SDK `get_views`: dumping the full catalogue of a specific project
+
+## 13. Concurrent Request Queue Ceiling (`maxSimultaneousRequest`)
+
+**Problem**: If the parent application triggers more than 10 unresolved `ask()` calls concurrently (e.g. iterating over a view catalog with `Promise.all(views.map(v => mapx.ask(...)))`), the SDK immediately rejects extra calls with:
+
+```
+too_many_request 11. Max= 10
+```
+
+> *Evidence*: Confirmed in `FrameManager.ask()` source code. The manager counts pending promises (`this._req.length`) and compares against `this.opt.maxSimultaneousRequest` (default 10).
+
+**Workarounds**:
+1. **Increase the ceiling**: Set `maxSimultaneousRequest: 50` in the `new Manager({ ... })` options.
+2. **Batch / throttle**: Use sequential loops (`for ... of`) or a concurrency pool (e.g. `p-limit`) instead of unbounded `Promise.all`.
+
+## 14. Static Mode vs. App Mode Method Availability
+
+**Problem**: Initializing with `static: true` (or pointing to `/static.html`) uses `MapxResolversStatic` instead of `MapxResolversApp`. Certain methods available in standard app mode will fail with `err_resolver_not_found` or console warnings:
+
+| Resolver | Static Mode (`static: true`) | App Mode (`static: false`) | Workaround in Static Mode |
+|---|---|---|---|
+| `get_views_id_open` | ❌ Fails (`err_resolver_not_found`) | ✅ Supported | Use `get_views_with_visible_layer` |
+| `set_project` | ❌ Fails (requires Shiny) | ✅ Supported | Recreate Manager iframe or use URL params |
+| `get_projects` | ❌ Fails | ✅ Supported | Pass known project IDs |
+| `get_user_*` / `set_token` | ❌ Fails | ✅ Supported | N/A (static mode is unauthenticated) |
+| `table_editor_*` | ❌ Fails | ✅ Supported | N/A |

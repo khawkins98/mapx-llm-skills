@@ -34,14 +34,17 @@ skills/
 
 ## MapX Domain Knowledge
 
-All content targets the MapX SDK deployed at `app.mapx.org/sdk/mxsdk.umd.js` (version string 1.13.19 as of March 2026). The SDK uses a postMessage bridge — all calls go through `mapx.ask("resolver_name", {params})` and return Promises.
+All content targets the MapX SDK deployed at `app.mapx.org/sdk/mxsdk.umd.js` and `mxsdk.modern.js` (version string 1.14.0-fix.1 as of August 2026; originally tested on 1.13.19). MapX uses MapLibre GL JS under the hood. The SDK uses a postMessage bridge — all calls go through `mapx.ask("resolver_name", {params})` and return Promises.
 
 Key facts to preserve in skill content:
 - SDK uses a **resolver pattern** via postMessage — functions and DOM elements cannot be passed
-- `view_add` fails silently for views outside the connected project
+- `view_add` fails silently for views outside the connected project; verify via `view_added` event or `safeViewAdd`
 - `map_wait_idle()` must be called before dashboard, filter, or data operations
 - `toggle_draw_mode` was removed from the SDK after 2020 — do not document it
-- `get_view_source_summary` can hang forever on failure — the FrameManager never rejects on resolver failure (known bug)
+- `set_vector_spotlight` is the active feature click highlighter (`set_vector_highlight` is deprecated)
+- `get_view_source_summary` can hang forever on failure — the FrameManager never rejects on resolver failure (known bug); wrap with `askWithTimeout`
+- `maxSimultaneousRequest: 10` is the default concurrency limit — batch or raise the option to avoid `too_many_request`
+- `get_views_id_open` is App-mode only; use `get_views_with_visible_layer` in static mode (`static: true`)
 
 ## Editing Guidelines
 

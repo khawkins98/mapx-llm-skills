@@ -1,7 +1,8 @@
 # MapX SDK Method Catalog
 
-Reference for `mapx.ask()` resolver methods tested against the deployed
-SDK (v1.13.19, March 2026). The SDK has additional methods not yet
+Reference for `mapx.ask()` resolver methods validated against the deployed
+SDK (v1.14.0-fix.1, August 2026; originally tested on v1.13.19). MapX uses
+MapLibre GL JS under the hood. The SDK has additional methods not yet
 documented here; see the [SDK source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
 for the full list. Every method returns a Promise. Parameters are passed
 as a single object.
@@ -10,7 +11,7 @@ as a single object.
 
 ### map_fly_to
 
-Animate the map camera. Accepts any Mapbox GL `AnimationOptions`.
+Animate the map camera smoothly. Accepts standard MapLibre GL `AnimationOptions`.
 
 ```javascript
 await mapx.ask("map_fly_to", {
@@ -23,13 +24,59 @@ await mapx.ask("map_fly_to", {
 });
 ```
 
+### map_jump_to
+
+Move the camera instantaneously without animation transitions.
+
+```javascript
+await mapx.ask("map_jump_to", {
+  center: { lng: 10, lat: 45 },
+  zoom: 6,
+  bearing: 0,
+  pitch: 0,
+});
+```
+
 ### map_get_zoom
 
-Returns the current zoom level as a number.
+Returns the current zoom level as a floating-point number.
 
 ```javascript
 const zoom = await mapx.ask("map_get_zoom");
 // => 5.5
+```
+
+### map_get_center
+
+Returns the current map center coordinates.
+
+```javascript
+const center = await mapx.ask("map_get_center");
+// => { lng: -72.0, lat: 18.0 }
+```
+
+### map_get_bounds_array / map_set_bounds_array
+
+Get or set the current visible bounding box as `[west, south, east, north]`.
+
+```javascript
+const bounds = await mapx.ask("map_get_bounds_array");
+// => [-75.2, 17.5, -68.8, 19.9]
+
+await mapx.ask("map_set_bounds_array", {
+  bounds: [-75.2, 17.5, -68.8, 19.9],
+  options: { padding: 20, duration: 1500 },
+});
+```
+
+### map_get_max_bounds_array / map_set_max_bounds_array
+
+Constrain map panning to a specific bounding box.
+
+```javascript
+await mapx.ask("map_set_max_bounds_array", {
+  bounds: [-80, 15, -65, 25],
+});
 ```
 
 ### map_wait_idle
@@ -153,21 +200,73 @@ const legend = await mapx.ask("get_view_legend_image", { idView: "MX-XXXXX" });
 
 ### get_views
 
-Returns the full catalog of views in the current project.
+Returns the full catalog of views in the current project as an array of view objects.
 
 ```javascript
 const views = await mapx.ask("get_views");
-// => [{id, type, data: {title: {en: "..."}, ...}}, ...]
+/*
+Sample element:
+{
+  id: "MX-XXXXX-XXXXX-XXXXX",
+  type: "vt", // "vt" (vector), "rt" (raster), "cc" (custom coded), "sm" (story map)
+  data: {
+    title: { en: "Protected Areas", fr: "Aires protégées" },
+    abstract: { en: "National and international protected areas..." },
+    source: { name: "WDPA", url: "https://..." },
+    attribute: { name: "status_year", type: "number" },
+    style: { ... }
+  },
+  project: "MX-PROJECT-ID",
+  date_modified: "2024-05-12T10:14:00.000Z"
+}
+*/
 ```
 
-### get_views_id_open
+### get_views_id_open (App Mode Only)
 
-Returns IDs of currently displayed views (async).
+Returns IDs of currently displayed views.
 
 ```javascript
 const ids = await mapx.ask("get_views_id_open");
 // => ["MX-XXXXX", "MX-YYYYY"]
 ```
+
+> **Static mode warning**: `get_views_id_open` is an `App`-only method. When running with
+> `static: true` (or `/static.html`), calling it will reject with `err_resolver_not_found`.
+> Use `get_views_with_visible_layer` below instead.
+
+### get_views_with_visible_layer (Static & App Mode)
+
+Returns the list of views that currently have active, visible layers on the map.
+
+```javascript
+const visibleViews = await mapx.ask("get_views_with_visible_layer");
+const visibleIds = visibleViews.map((v) => v.id);
+// => ["MX-XXXXX", "MX-YYYYY"]
+```
+
+### set_views_layer_order
+
+Reorders the visual stacking of view layers on the map.
+
+```javascript
+await mapx.ask("set_views_layer_order", {
+  order: ["MX-TOP-VIEW", "MX-BOTTOM-VIEW"],
+});
+```
+
+### set_project (App Mode Only)
+
+Switches the active MapX project dynamically without reloading the parent page.
+
+```javascript
+const ok = await mapx.ask("set_project", { idProject: "MX-TARGET-PROJECT-ID" });
+```
+
+**Behavior & Constraints**:
+- **App mode only**: Requires an active Shiny websocket session; fails with a console warning in static mode (`static: true`).
+- **State reset**: Closes all currently displayed views and clears initial query parameters.
+- **Event**: Fires a `project_changed` event with payload `{ new_project, old_project }` when complete. The `ready` event does **not** fire again.
 
 ---
 
@@ -190,7 +289,7 @@ const viewId = result.id;
 
 ### view_geojson_set_style
 
-Style a GeoJSON view using Mapbox GL paint/layout properties.
+Style a GeoJSON view using MapLibre GL paint and layout properties.
 
 ```javascript
 await mapx.ask("view_geojson_set_style", {
@@ -219,18 +318,22 @@ await mapx.ask("view_geojson_delete", { idView: viewId });
 
 Filter a vector tile view by numeric attribute range. Only works on `vt` views.
 
-> **Parameter uncertainty**: The examples below use `from`/`to`/`attribute`,
-> which worked in testing against the deployed SDK (v1.13.19). However,
-> the SDK source documents `{idView, value}` as the parameter shape. If
-> `from`/`to` doesn't work, try the `value`-based form instead. This
-> needs further verification.
+Both `{ idView, from, to }` and `{ idView, value: [min, max] }` syntax are supported. When `value` is provided, the SDK internally derives `from = Math.min(...value)` and `to = Math.max(...value)`.
 
 ```javascript
+// Form 1: Explicit from/to
 await mapx.ask("set_view_layer_filter_numeric", {
   idView: "MX-XXXXX",
   attribute: "population",
   from: 1000000,
   to: 50000000,
+});
+
+// Form 2: Array value range [min, max]
+await mapx.ask("set_view_layer_filter_numeric", {
+  idView: "MX-XXXXX",
+  attribute: "population",
+  value: [1000000, 50000000],
 });
 
 // Clear the filter:
@@ -374,15 +477,42 @@ if (hasDash) {
 // Also supports: { toggle: true }
 ```
 
-### set_vector_highlight
+### set_vector_spotlight (Preferred) / set_vector_highlight (Deprecated)
 
-Enable/disable the click highlight ring on vector features.
-On newer SDK versions, this may be deprecated in favor of
-`set_vector_spotlight` (same parameters).
+Enable or disable the visual spotlight ring when clicking vector features. `set_vector_spotlight` is the active upstream method; `set_vector_highlight` is retained as a deprecated alias that logs a warning in the console.
 
 ```javascript
-await mapx.ask("set_vector_highlight", { enable: true });
+await mapx.ask("set_vector_spotlight", { enable: true });
 // Optional parameters: nLayers (number), calcArea (boolean)
+```
+
+### set_highlighter / update_highlighter / reset_highlighter
+
+Apply dynamic highlighting to vector features matching MapLibre GL filter expressions or at specific coordinates.
+
+```javascript
+// Highlight features matching criteria:
+await mapx.ask("set_highlighter", {
+  filters: [
+    {
+      id: "MX-XXXXX-XXXXX-XXXXX",
+      filter: [">=", ["get", "population"], 500000],
+    },
+  ],
+});
+
+// Update or reset:
+await mapx.ask("update_highlighter");
+await mapx.ask("reset_highlighter");
+```
+
+### set_country_highlight
+
+Highlights specified countries on the basemap by graying out all other countries.
+
+```javascript
+// Accepts ISO 3166-1 alpha-3 country codes:
+await mapx.ask("set_country_highlight", ["KEN", "UGA", "TZA"]);
 ```
 
 ### set_features_click_sdk_only
@@ -416,6 +546,31 @@ await mapx.ask("set_panel_left_visibility", { show: true });
 await mapx.ask("set_panel_left_visibility", { show: false });
 ```
 
+### Panels API (MapxResolversPanels)
+
+Upstream MapX provides a full panel management suite via `MapxResolversPanels`:
+
+```javascript
+// Batch update panel visibility and drawer states
+await mapx.ask("panels_batch", {
+  controls_panel: { show: true, open: true },
+});
+
+// Query panel state and list
+const state = await mapx.ask("panels_state");
+const panelList = await mapx.ask("panels_list"); // => ['controls_panel', ...]
+
+// Global bulk actions
+await mapx.ask("panels_close_all");
+await mapx.ask("panels_open_all");
+await mapx.ask("panels_hide_all");
+await mapx.ask("panels_show_all");
+
+// Status checks
+const isOpen = await mapx.ask("panels_is_open", { id: "controls_panel" });
+const isVisible = await mapx.ask("panels_is_visible", { id: "controls_panel" });
+```
+
 ### show_modal_map_composer
 
 Open the MapX map export tool modal (layout, legend, scale bar, etc.).
@@ -445,10 +600,9 @@ await mapx.ask("close_modal_all");
 
 ---
 
-## Mapbox GL JS Passthrough
+## MapLibre GL JS Passthrough
 
-The `"map"` resolver exposes the underlying Mapbox GL JS `Map` instance.
-You can call any Mapbox method through it.
+The `"map"` resolver exposes the underlying MapLibre GL JS `Map` instance (MapX uses MapLibre GL JS, retaining drop-in API compatibility with Mapbox GL JS v1). You can call any MapLibre map method through it.
 
 ```javascript
 // Generic pattern
@@ -509,50 +663,85 @@ For click interaction on passthrough layers, use coordinate matching
 
 ---
 
-## Events
+## Events Catalog
 
-The SDK emits events that the parent page can listen to:
+MapX routes internal lifecycle and application events across the postMessage bridge. Listen with `mapx.on(eventName, callback)`:
 
 ```javascript
+// --- 1. Ready & Connection ---
 mapx.on("ready", () => {
-  // SDK connected, safe to call ask()
+  // SDK connected and FrameWorker initialized. Safe to make ask() calls.
 });
 
+mapx.on("mapx_connected", () => {
+  // Shiny websocket connection established (App mode).
+});
+
+mapx.on("mapx_disconnected", () => {
+  // Shiny websocket connection dropped.
+});
+
+// --- 2. View Lifecycle & safeViewAdd ---
+mapx.on("view_added", ({ idView, time }) => {
+  // Fires when a view layer finishes loading and renders on the map.
+  // Use this to reliably confirm view_add succeeded!
+  console.log(`View ${idView} active on map`);
+});
+
+mapx.on("view_removed", ({ idView }) => {
+  // Fires when a view layer is closed/removed.
+  console.log(`View ${idView} removed`);
+});
+
+mapx.on("views_list_updated", () => {
+  // Fires when the view catalog finishes loading or updating.
+});
+
+mapx.on("layers_ordered", () => {
+  // Fires when layer display stacking order changes.
+});
+
+// --- 3. Filtering & Legends ---
+mapx.on("view_filtered", (data) => {
+  // Fires when a layer filter is updated.
+});
+
+mapx.on("view_legend_updated", () => {
+  // Fires when view legend graphic/rules update.
+});
+
+// --- 4. Feature Inspection ---
 mapx.on("click_attributes", (data) => {
-  // Fires ONCE PER OPEN VT VIEW per map click (one event per active vector-tile view,
-  // NOT once per click). Raster (rt) and custom-coded (cc) views do NOT fire this event.
-  //
-  // CONFIRMED payload shape (from MapX source app/src/js/map_helpers/index.js):
+  // Fires ONCE PER OPEN VT VIEW per map click.
+  // Payload:
   // {
-  //   part:       number,       // 1-indexed position of this event in the batch
-  //   nPart:      number,       // total events expected (= number of open VT views)
-  //   idView:     string,       // MapX view ID that this event is for
-  //   attributes: [],           // array of feature attribute objects at click point
-  //                             //   empty array [] if no VT feature was hit (NOT absent)
-  //   point:      { x, y },    // pixel coordinates (Mapbox GL Point object)
-  //   lngLat:     { lng, lat } // geographic coordinates (ALWAYS present)
+  //   part:       number,       // 1-indexed position in batch
+  //   nPart:      number,       // total open VT views expected
+  //   idView:     string,       // view ID
+  //   attributes: [],           // feature attributes at click point
+  //   point:      { x, y },     // pixel coordinates
+  //   lngLat:     { lng, lat }  // geographic coordinates
   // }
-  //
-  // BATCHING PATTERN: Collect events until parts.size === nPart to have all views:
-  //   const batch = new Map();
-  //   function handleClick({ part, nPart, idView, attributes, lngLat }) {
-  //     if (part === 1) batch.clear();          // new click, reset
-  //     batch.set(idView, attributes);
-  //     if (batch.size === nPart) renderAll(batch, lngLat);
-  //   }
-  //
-  // IMPORTANT: If only RT layers are open, nPart === 0 and this event NEVER fires,
-  // meaning geographic coordinates are unavailable from this event alone.
+});
+
+// --- 5. Application State ---
+mapx.on("language_change", ({ lang }) => {
+  // Fires when the UI language changes.
+});
+
+mapx.on("project_changed", ({ new_project, old_project }) => {
+  // Fires when set_project completes successfully.
+});
+
+mapx.on("spotlight_update", (data) => {
+  // Fires when vector spotlight feature changes.
+});
+
+mapx.on("story_step", (data) => {
+  // Fires when a story map advances to a new step.
 });
 ```
 
-**Events tested in this skill**: `ready`, `click_attributes`
-
-The SDK supports additional events (e.g., `view_added`, `view_removed`,
-`language_change`, `project_change`, `views_list_updated`, `story_step`,
-and others listed in the SDK README) but these have not been tested in
-embedded contexts and are not yet documented here.
-
-The SDK does not expose native Mapbox map events (`moveend`, `zoomend`, etc.)
+The SDK does not expose native MapLibre map events (`moveend`, `zoomend`, etc.)
 to the parent page. For camera-tracking, use polling via
 `map({method: "getCenter"})` and `map({method: "getZoom"})`.

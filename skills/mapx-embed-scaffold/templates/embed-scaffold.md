@@ -67,12 +67,30 @@ export default defineConfig({
 import "./styles/app.css";
 import { initSDK } from "./sdk/client.js";
 import { buildViewButtons } from "./ui/view-buttons.js";
+import * as store from "./state/store.js";
 
 const mapx = initSDK(document.getElementById("mapx"));
 
+// Event-driven state updates — automatically reflects active map layers
+mapx.on("view_added", ({ idView }) => {
+  store.openViews.add(idView);
+  buildViewButtons();
+});
+
+mapx.on("view_removed", ({ idView }) => {
+  store.openViews.delete(idView);
+  buildViewButtons();
+});
+
 mapx.on("ready", async () => {
   console.log("MapX SDK ready");
-  await mapx.ask("set_vector_highlight", { enable: true });
+
+  // Ensure map tiles and initial views finish loading
+  await mapx.ask("map_wait_idle");
+
+  // Enable feature spotlight click indicator
+  await mapx.ask("set_vector_spotlight", { enable: true });
+
   buildViewButtons();
 });
 ```
@@ -83,6 +101,7 @@ mapx.on("ready", async () => {
 /**
  * SDK client — singleton Manager instance.
  * The UMD script tag loads the global `mxsdk` object.
+ * (Alternatively: `import { Manager } from "https://app.mapx.org/sdk/mxsdk.modern.js";`)
  */
 let _mapx = null;
 
@@ -96,6 +115,7 @@ export function initSDK(container) {
       theme: "color_light",
     },
     style: { width: "100%", height: "100%", border: "none" },
+    maxSimultaneousRequest: 20,
   });
   return _mapx;
 }
@@ -104,41 +124,61 @@ export function getSDK() {
   if (!_mapx) throw new Error("SDK not initialised");
   return _mapx;
 }
+
+/**
+ * Defensive ask() wrapper with timeout to prevent hanging on resolver errors.
+ */
+export function askWithTimeout(method, data = {}, timeoutMs = 8000) {
+  const sdk = getSDK();
+  return Promise.race([
+    sdk.ask(method, data),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`MapX ask("${method}") timed out after ${timeoutMs}ms`)),
+        timeoutMs
+      )
+    ),
+  ]);
+}
 ```
 
 ## src/sdk/views.js
 
 ```javascript
-import { getSDK } from "./client.js";
+import { askWithTimeout } from "./client.js";
 
 export function viewAdd(idView) {
-  return getSDK().ask("view_add", { idView });
+  return askWithTimeout("view_add", { idView });
 }
 
 export function viewRemove(idView) {
-  return getSDK().ask("view_remove", { idView });
+  return askWithTimeout("view_remove", { idView });
+}
+
+export function getVisibleViews() {
+  return askWithTimeout("get_views_with_visible_layer");
 }
 ```
 
 ## src/sdk/map-control.js
 
 ```javascript
-import { getSDK } from "./client.js";
+import { askWithTimeout } from "./client.js";
 
 export function mapFlyTo(opts) {
-  return getSDK().ask("map_fly_to", opts);
+  return askWithTimeout("map_fly_to", opts);
 }
 
 export function mapGetZoom() {
-  return getSDK().ask("map_get_zoom");
+  return askWithTimeout("map_get_zoom");
 }
 
 export function mapWaitIdle() {
-  return getSDK().ask("map_wait_idle");
+  return askWithTimeout("map_wait_idle");
 }
 
 export function commonLocFitBbox(code, param) {
-  return getSDK().ask("common_loc_fit_bbox", { code, param });
+  return askWithTimeout("common_loc_fit_bbox", { code, param });
 }
 ```
 
@@ -147,8 +187,7 @@ export function commonLocFitBbox(code, param) {
 ```javascript
 /**
  * Track which views are currently displayed.
- * view_add/view_remove are fire-and-forget — there's no
- * synchronous "is this view open?" check in the SDK.
+ * Synced automatically via mapx.on("view_added") and mapx.on("view_removed").
  */
 export const openViews = new Set();
 ```
@@ -177,26 +216,30 @@ import { viewAdd, viewRemove } from "../sdk/views.js";
 
 export function buildViewButtons() {
   const container = document.getElementById("view-buttons");
+  if (!container) return;
   container.innerHTML = "";
 
   CURATED_VIEWS.forEach((v) => {
     const btn = document.createElement("button");
     btn.textContent = v.label;
     btn.title = v.id;
-    btn.addEventListener("click", () => toggleView(v.id, btn));
+    if (store.openViews.has(v.id)) {
+      btn.classList.add("is-active");
+    }
+    btn.addEventListener("click", () => toggleView(v.id));
     container.appendChild(btn);
   });
 }
 
-async function toggleView(idView, btn) {
-  if (store.openViews.has(idView)) {
-    await viewRemove(idView);
-    store.openViews.delete(idView);
-    btn.classList.remove("is-active");
-  } else {
-    await viewAdd(idView);
-    store.openViews.add(idView);
-    btn.classList.add("is-active");
+async function toggleView(idView) {
+  try {
+    if (store.openViews.has(idView)) {
+      await viewRemove(idView);
+    } else {
+      await viewAdd(idView);
+    }
+  } catch (err) {
+    console.error(`Failed to toggle view ${idView}:`, err);
   }
 }
 ```

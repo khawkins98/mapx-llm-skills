@@ -40,10 +40,7 @@ await mapx.ask("set_view_layer_filter_numeric", {
 });
 ```
 
-**Note**: The examples here use `from`/`to`/`attribute`, which worked in
-testing against the deployed SDK (v1.13.19). The SDK source documents
-`{idView, value}` as the parameter shape. If `from`/`to` doesn't work,
-try the `value`-based form. This discrepancy needs further verification.
+**Note**: Both `{ idView, from, to }` and `{ idView, value: [min, max] }` syntax are supported. Passing `value` automatically derives `from = Math.min(...value)` and `to = Math.max(...value)`.
 
 ## Text/Category Filters
 
@@ -157,7 +154,7 @@ URL.revokeObjectURL(url);
 
 ## Spatial Queries
 
-Use the Mapbox GL passthrough to query rendered features:
+Use the MapLibre GL passthrough to query rendered features:
 
 ```javascript
 // Query everything in the viewport
@@ -177,7 +174,7 @@ const features = await mapx.ask("map", {
 - Only returns vector features — raster layers produce no results
 - Results are serialized through postMessage, so very large result sets
   may be slow or truncated
-- Results include Mapbox-internal fields (`layer`, `source`, `sourceLayer`,
+- Results include MapLibre-internal fields (`layer`, `source`, `sourceLayer`,
   `state`) that are not part of standard GeoJSON. Strip them before exporting:
   ```javascript
   function cleanFeatures(features) {
@@ -186,7 +183,7 @@ const features = await mapx.ask("map", {
   // Note: returns an array of cleaned feature objects, not a FeatureCollection.
   // Wrap if needed: { type: "FeatureCollection", features: cleanFeatures(raw) }
   ```
-- Use the Mapbox GL `filter` option to narrow results:
+- Use the MapLibre GL `filter` option to narrow results:
   ```javascript
   parameters: [geometry, { layers: ["my-layer-id"] }]
   ```
@@ -218,6 +215,6 @@ const lngLat = await mapx.ask("map", {
 
 *\* GeoJSON views don't support `set_view_layer_filter_numeric`. As a
 client-side alternative, use `view_geojson_set_style` to dim non-matching
-features via a Mapbox paint expression (e.g. `"circle-opacity": 0.08`)
+features via a MapLibre paint expression (e.g. `"circle-opacity": 0.08`)
 while keeping matching features at full opacity. Store the original paint
 so you can restore it on "clear".*

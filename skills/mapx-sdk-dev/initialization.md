@@ -2,13 +2,21 @@
 
 ## Loading the SDK
 
-The SDK is loaded as a UMD script that exposes the global `mxsdk` object.
-It must be loaded **before** your application code.
+The SDK can be loaded either as a modern ES6 module (recommended for Vite/Webpack/Rollup) or via a UMD script tag exposing the global `mxsdk` object:
+
+### Option A: ES6 Module (Modern)
+
+```javascript
+import { Manager } from "https://app.mapx.org/sdk/mxsdk.modern.js";
+```
+
+### Option B: UMD Script Tag
 
 ```html
 <script src="https://app.mapx.org/sdk/mxsdk.umd.js"></script>
 <script type="module" src="/src/main.js"></script>
 ```
+When using UMD, access the constructor via `window.mxsdk.Manager`.
 
 ## Manager Constructor
 
@@ -16,7 +24,7 @@ The `Manager` creates an iframe inside the target container and loads the
 MapX app with the specified project.
 
 ```javascript
-const mapx = new mxsdk.Manager({
+const mapx = new Manager({
   container: document.getElementById("mapx"),
   url: "https://app.mapx.org/?project=MX-XXXXX-XXX-XXX-XXX-XXX",
   params: {
@@ -37,19 +45,28 @@ const mapx = new mxsdk.Manager({
     height: "100%",
     border: "none",
   },
-  // static: true,  // Use /static.html for fewer features but faster load
+  // static: true,  // Use /static.html for faster, lightweight embedding
+  // maxSimultaneousRequest: 20, // Default 10; raise if batching concurrent ask() calls
+  // verbose: false, // Set true to log SDK postMessage traffic to console
 });
 ```
 
 ### Constructor Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `container` | HTMLElement | DOM element where the iframe is inserted |
-| `url` | string | MapX app URL with `?project=` query param |
-| `params` | object | URL query params passed to the app |
-| `style` | object | CSS applied to the iframe element |
-| `static` | boolean | Load static.html (faster, fewer features) |
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `container` | HTMLElement \| string | `"body"` | DOM element or selector where the iframe is inserted |
+| `url` | string \| URL \| object | — | MapX app URL with `?project=` query param |
+| `params` | object | `{}` | URL query params passed to the app |
+| `style` | object | `{ width: "100%", ... }` | CSS applied to the iframe element |
+| `static` | boolean | `false` | Load `/static.html` (faster, lighter, see below) |
+| `maxSimultaneousRequest` | number | `10` | Concurrency ceiling for pending `ask()` promises |
+| `verbose` | boolean | `false` | Enable color-coded console logs of SDK postMessage events |
+
+> **Concurrency warning (`maxSimultaneousRequest`)**: If your application fires more than
+> `maxSimultaneousRequest` (default 10) unresolved `ask()` calls simultaneously (e.g. via an
+> unthrottled `Promise.all`), the SDK immediately rejects excess calls with
+> `too_many_request <n>. Max= 10`. Either raise this limit or throttle batch calls.
 
 ### Params Object
 
@@ -63,6 +80,16 @@ const mapx = new mxsdk.Manager({
 | `zoom` | number | — | Initial zoom level |
 | `lockProject` | boolean | false | Prevent project switching |
 | `views` | string[] | — | View IDs to show at startup |
+| `hidePrivacyModal` | boolean | true | Suppress the MapX privacy consent modal in embed |
+
+## Static Mode vs. App Mode
+
+MapX supports two runtime modes:
+
+* **Static mode (`static: true`)**: Loads `/static.html`. A stripped-down, high-performance runtime without Shiny websockets, user login, or editing tools. Ideal for public dashboards and embeds where users only view and filter curated layers.
+  * *Important limitation*: `get_views_id_open` does not exist in static mode. Use `get_views_with_visible_layer()` instead.
+  * Project switching (`set_project`) is not supported in static mode.
+* **App mode (`static: false`, default)**: Loads the full MapX single-page application. Supports user accounts, project switching, full panel suites, and collaborative attribute editing.
 
 ## Singleton Pattern
 
@@ -70,10 +97,12 @@ Use a singleton to ensure only one Manager instance exists:
 
 ```javascript
 // sdk/client.js
+import { Manager } from "https://app.mapx.org/sdk/mxsdk.modern.js";
+
 let _mapx = null;
 
 export function initSDK(container) {
-  _mapx = new mxsdk.Manager({
+  _mapx = new Manager({
     container,
     url: "https://app.mapx.org/?project=MX-YOUR-PROJECT-ID",
     params: { closePanels: true, language: "en", theme: "color_light" },
@@ -97,8 +126,11 @@ is ready to accept commands. **Never call `ask()` before ready**.
 const mapx = initSDK(document.getElementById("mapx"));
 
 mapx.on("ready", async () => {
-  // NOW safe to call SDK methods
-  await mapx.ask("set_vector_highlight", { enable: true });
+  // Wait for initial tile rendering to finish
+  await mapx.ask("map_wait_idle");
+
+  // Enable feature spotlight click rings (preferred over deprecated set_vector_highlight)
+  await mapx.ask("set_vector_spotlight", { enable: true });
 });
 ```
 
@@ -149,3 +181,17 @@ The container must have explicit dimensions. The SDK iframe fills it with
 
 A common layout is sidebar (fixed width) + map area (flex: 1) inside a
 flex container with a fixed height (e.g. `75vh`).
+
+## Content-Security-Policy (CSP) Guidance
+
+If your parent web application enforces strict Content-Security-Policy (CSP) headers, ensure the following directives allow the MapX iframe and CDN assets:
+
+```http
+Content-Security-Policy:
+  frame-src 'self' https://app.mapx.org;
+  script-src 'self' https://app.mapx.org;
+  connect-src 'self' https://app.mapx.org https://api.mapx.org;
+```
+
+* `frame-src https://app.mapx.org` allows embedding the MapX application inside the iframe.
+* `script-src` and `connect-src` are required if dynamically importing `mxsdk.modern.js` or querying the MapX API directly from the host page.
