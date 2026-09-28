@@ -8,6 +8,7 @@
  *   node run.mjs              # both modes, headless (falls back to headed if ready never fires)
  *   node run.mjs --headed     # force a visible browser
  *   node run.mjs --mode=app   # one mode only
+ *   node run.mjs --host=staging  # test app.staging.mapx.org instead of prod
  *
  * Nothing is written to MapX: checks only read, toggle views, and set
  * filters/language inside the embedded session.
@@ -22,6 +23,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const forceHeaded = args.includes("--headed");
 const onlyMode = args.find((a) => a.startsWith("--mode="))?.split("=")[1];
+// --host=staging tests app.staging.mapx.org (pre-release) instead of prod
+const HOST = args.find((a) => a.startsWith("--host="))?.split("=")[1] === "staging"
+  ? "app.staging.mapx.org"
+  : "app.mapx.org";
 
 // Test fixtures, taken from the undrr-risk-resilience-maps-pw catalogues.
 const FX = {
@@ -51,7 +56,7 @@ const FX = {
 
 const PAGE = `<!doctype html><html><body style="margin:0">
 <div id="mapx" style="width:1024px;height:700px"></div>
-<script src="https://app.mapx.org/sdk/mxsdk.umd.js"></script>
+<script src="https://${HOST}/sdk/mxsdk.umd.js"></script>
 </body></html>`;
 const HARNESS = readFileSync(join(HERE, "harness.js"), "utf8");
 
@@ -74,7 +79,7 @@ async function openSession(browser, { project, isStatic }, iframeRequests) {
   });
   await page.goto(BASE, { waitUntil: "load" });
   await page.addScriptTag({ content: HARNESS });
-  const info = await page.evaluate((o) => H.init(o), { project, isStatic, timeoutMs: 90000 });
+  const info = await page.evaluate((o) => H.init(o), { project, isStatic, host: HOST, timeoutMs: 90000 });
   return { page, info };
 }
 
@@ -332,7 +337,7 @@ async function launch(headless) {
 
 const modes = onlyMode ? [onlyMode] : ["static", "app"];
 mkdirSync(join(HERE, "results"), { recursive: true });
-const stamp = new Date().toISOString().slice(0, 10);
+const stamp = new Date().toISOString().slice(0, 10) + (HOST === "app.mapx.org" ? "" : "-staging");
 
 let headless = !forceHeaded;
 let browser = await launch(headless);
@@ -354,6 +359,7 @@ server.close();
     }
   }
   res.headless = headless;
+  res.host = HOST;
   const file = join(HERE, "results", `${stamp}-${mode}.json`);
   writeFileSync(file, JSON.stringify(res, null, 2));
   console.log(`  wrote ${file}`);

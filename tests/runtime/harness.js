@@ -31,13 +31,13 @@
     "project_changed", "spotlight_update", "mapx_ready",
   ];
 
-  H.init = ({ project, isStatic, timeoutMs = 90000 }) =>
+  H.init = ({ project, isStatic, host = "app.mapx.org", timeoutMs = 90000 }) =>
     new Promise((resolve, reject) => {
       const t0 = now();
       const timer = setTimeout(() => reject(new Error(`ready not fired after ${timeoutMs}ms`)), timeoutMs);
       H.mapx = new window.mxsdk.Manager({
         container: document.getElementById("mapx"),
-        url: `https://app.mapx.org/?project=${project}`,
+        url: `https://${host}/?project=${project}`,
         params: { closePanels: true, language: "en", theme: "color_light" },
         style: { width: "100%", height: "100%", border: "none" },
         static: isStatic,
