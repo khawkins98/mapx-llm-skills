@@ -228,8 +228,9 @@ export function getVisibleViews() {
 ```javascript
 import { askWithTimeout } from "./client.js";
 
+/** Keep opts.duration under 10 s: longer flights make the resolver fail (and hang). */
 export function mapFlyTo(opts) {
-  return askWithTimeout("map_fly_to", opts);
+  return askWithTimeout("map_fly_to", opts, 12000);
 }
 
 export function mapGetZoom() {

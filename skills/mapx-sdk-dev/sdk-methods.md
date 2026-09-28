@@ -24,7 +24,8 @@ const methods = await mapx.ask("get_sdk_methods");
 ```
 
 Caveat: the list is built from the static/app resolver prototypes only, so
-the inherited `panels_*` resolvers are **not** included even though they work.
+the inherited `panels_*` resolvers are **not** included even though they work
+(runtime-verified: 89 methods in static mode, 126 in app mode, no `panels_*`).
 
 ## Map Navigation & Display
 
@@ -42,6 +43,11 @@ await mapx.ask("map_fly_to", {
   essential: true,   // not affected by prefers-reduced-motion
 });
 ```
+
+Resolves when the move ends. **Keep `duration` under 10 s**: the resolver
+rejects internally after 10 s (`err_resolver_failed`, `msg: "timeout"`), and
+because failed resolvers never settle, the `ask()` then **hangs**
+(runtime-verified with a 12 s flight).
 
 ### map_jump_to
 
@@ -218,15 +224,13 @@ Always check `ok === true` rather than truthiness, and guard the call with a
 timeout (see `askWithTimeout` in
 [limitations-and-workarounds.md §9](limitations-and-workarounds.md)).
 
-**Views outside the connected project**: in March 2026 (v1.13.19) a
-cross-project `view_add` did nothing at all: no error, no visual change.
-The v1.14 source behaves differently. `view_add` looks the ID up in the
-project, then **fetches it from the MapX API** (`getViewRemote`). A view the
-API returns (for example a public view from another project) may therefore
-load. An ID the API cannot return throws inside the resolver, and the
-promise never settles. This has **not been re-tested at runtime on v1.14**,
-so verify with `safeViewAdd` (limitations §1) rather than assuming either
-outcome.
+**Views outside the connected project** (runtime-verified 2026-09-28):
+public views from other projects **load** on 1.14. `view_add` fetches them
+from the MapX API and resolves `true`, and `view_added` fires. (On 1.13.19
+they did nothing.) A non-existent ID never settles and emits
+`err_resolver_failed` with `View not found`. `view_added` also fires again
+when the view is already open. Details:
+[limitations-and-workarounds.md §1](limitations-and-workarounds.md).
 
 ### view_remove
 
@@ -301,7 +305,8 @@ const ids = await mapx.ask("get_views_id_open");
 > **Static mode warning**: `get_views_id_open` only exists in app mode.
 > With `static: true` (or `/static.html`) the worker answers
 > `err_resolver_not_found`, and the promise **never settles**: it hangs
-> rather than rejecting. Use `get_views_with_visible_layer` instead.
+> rather than rejecting (runtime-verified). Use
+> `get_views_with_visible_layer` instead.
 
 ### get_views_with_visible_layer (Static & App Mode)
 
@@ -341,9 +346,21 @@ await mapx.ask("move_view_after", { idView: "MX-XXXXX", idViewAfter: "MX-YYYYY" 
 Switches the active MapX project without reloading the parent page.
 
 ```javascript
-const ok = await mapx.ask("set_project", { idProject: "MX-TARGET-PROJECT-ID" });
-// true on success; false or undefined on any failure (see below)
+// Don't trust the promise alone (see below): guard it and verify
+const target = "MX-TARGET-PROJECT-ID";
+await askWithTimeout(mapx, "set_project", { idProject: target }, 15000).catch(() => {});
+const switched = (await mapx.ask("get_project")) === target;
 ```
+
+**Runtime behaviour** (verified 2026-09-28 as a guest):
+- Switching to a **public** project with no views open resolved `true` in
+  ~1.3 s and fired `project_changed`.
+- Switching to a public project **with views open**: the project did change
+  (`get_project` returned the target), but the promise never settled and
+  `project_changed` never fired.
+- Switching to a project the user **can't open**: MapX shows a "The project
+  cannot be loaded. Please log in and try again." dialog inside the iframe,
+  and the promise stays pending until someone closes it.
 
 **Behavior & Constraints** (from `setProject` in `map_helpers/index.js`):
 - **App mode only**: the resolver does not exist in static mode, so the call
@@ -355,8 +372,8 @@ const ok = await mapx.ask("set_project", { idProject: "MX-TARGET-PROJECT-ID" });
 - **UI side effects inside the iframe**: if any MapX modal is open, MapX
   asks the user to confirm (declining returns `false`). If the server
   refuses the change or doesn't answer within **10 s**, MapX shows a
-  failure dialog and returns `false`. The dialog wording differs for
-  guests and logged-in users; project access is decided server-side.
+  failure dialog and only returns `false` **after the user closes it**.
+  Project access is decided server-side.
 - **State reset**: closes all displayed views and clears initial query
   parameters, then reconnects the websocket and waits for the view list.
 - **Event**: fires `project_changed` with `{ new_project, old_project }`.
@@ -421,8 +438,17 @@ Filter a vector tile view by numeric attribute range. Only works on `vt` views.
 | `attribute` | ❌ Ignored (slider uses the view's styled attribute) | ✅ Used (defaults to the styled attribute) |
 
 In app mode the resolver passes **only `opt.value`** to the slider. Sending
-`{ from, to }` without `value` does nothing. **Always send `value`**. To
-write code that works in either mode, send both forms:
+`{ from, to }` without `value` does nothing (runtime-verified). **Always
+send `value`**.
+
+App-mode caveats (runtime-verified):
+- The range **snaps to the slider step**, `(min + max) / 1000` of the
+  attribute's range: `[20000, 100000]` became `19927.70–99945.08`, and
+  `[2, 60]` on a 0–153 290 attribute collapsed to `0..0`.
+- `get_view_layer_filter_numeric` returns **strings** in app mode
+  (`["19927.70", "99945.08"]`) and numbers in static mode.
+
+To write code that works in either mode, send both forms:
 
 ```javascript
 // Portable: works in app and static mode
@@ -439,8 +465,9 @@ const current = await mapx.ask("get_view_layer_filter_numeric", { idView: "MX-XX
 ```
 
 **Clearing**: there is no "clear" value. `null` is a no-op for the app-mode
-slider, and in static mode `from: null, to: null` becomes a `0..0` range
-that hides almost everything. Reset to the attribute's full range instead:
+slider, and in static mode `from: null, to: null` writes
+`<= null` / `>= null` comparisons into the layer filter. Reset to the
+attribute's full range instead:
 
 ```javascript
 // Default stats include the styled attribute's min/max
@@ -464,7 +491,10 @@ Filter a vector tile view by text/category values.
 |---|---|---|
 | `value` (string or array) | ✅ Sent to the view's search box | ❌ Ignored |
 | `values` (string or array) | ❌ Ignored | ✅ Used |
-| `attribute` | ❌ Ignored | ⚠️ **Required in practice**: omitting it throws inside the resolver (upstream bug), so the call hangs |
+| `attribute` | ❌ Ignored | ⚠️ **Required in practice**: omitting it throws `Cannot access '…' before initialization` (upstream bug), so the call hangs |
+
+Runtime-verified 2026-09-28. Also: in app mode, a call carrying only
+`values` (no `value`) **clears** the current text filter.
 
 ```javascript
 // Portable: works in app and static mode
@@ -511,9 +541,8 @@ await mapx.ask("set_view_layer_filter_time", {
 });
 ```
 
-The upstream JSDoc example passes only `from`/`to`. Following the numeric
-filter's app-mode code path, the slider receives `value`, so both are sent
-here; this has not been runtime-tested.
+The upstream JSDoc example passes only `from`/`to`, which **does nothing in
+app mode**: the time slider only reads `value` (runtime-verified). Send both.
 
 ### get_view_legend_values / get_view_legend_state / set_view_legend_state
 
@@ -531,7 +560,9 @@ await mapx.ask("set_view_legend_state", { idView: "MX-XXXXX", values: [all[0]] }
 Set a layer's transparency. **The scale depends on the mode**: in app mode
 `value` is 0–100 transparency (0 = opaque); in static mode the number is
 applied directly as MapLibre opacity, 0–1 (1 = opaque), read from
-`opacity` or else `value`.
+`opacity` or else `value`. Runtime-verified: in static mode `value: 50` set
+no opacity at all (MapLibre rejects 50), while `opacity: 0.5` gave
+`circle-opacity: 0.5`. In app mode `value: 50` gave `0.5`.
 
 ```javascript
 // Portable: 50% transparent in either mode
@@ -824,7 +855,9 @@ await mapx.ask("map", {
 // Set projection (MapLibre v5 takes an object, NOT a string)
 await mapx.ask("map", { method: "setProjection", parameters: [{ type: "globe" }] });
 const proj = await mapx.ask("map", { method: "getProjection" });
-// => { type: "globe" } or { type: "mercator" }
+// => { type: "globe" } / { type: "mercator" }; undefined on a fresh map (= mercator)
+// setProjection("globe") (string) is silently ignored: the map stays mercator
+// (runtime-verified by comparing map.project() output)
 
 // Get center/zoom
 const center = await mapx.ask("map", { method: "getCenter" });

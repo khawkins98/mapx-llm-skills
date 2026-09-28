@@ -48,6 +48,11 @@ await mapx.ask("set_view_layer_filter_numeric", {
 });
 ```
 
+**App-mode snapping**: the app-mode slider snaps to steps of
+`(min + max) / 1000`, so ranges are approximate (`[20000, 100000]` became
+`19927.70–99945.08`), and a range narrower than one step collapses to a
+single value. `get_view_layer_filter_numeric` returns strings in app mode.
+
 **App-mode limitation**: the app-mode slider always filters the view's
 **styled** attribute (`view.data.attribute.name`). `attribute` is ignored,
 so filtering a *different* numeric column only works in static mode. In app

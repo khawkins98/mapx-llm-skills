@@ -17,32 +17,38 @@ no visual change.
 > *Evidence*: Observed 2026-03-19 when attempting to load Eco-DRR story maps
 > from the HOME project. Documented in `mapx-demo-embed/methodology.md` §8.
 
-**1.14 source (not yet runtime-tested)**: `view_add` → `viewAddAuto` →
-`getViewAuto` looks the ID up in the loaded project and, if it's missing,
-**fetches it from the MapX API** (`getViewRemote`, `map_helpers/index.js`).
-From the code:
-- If the API returns the view (e.g. a public view from another project),
-  app mode adds it to the view list and opens it. The cross-project call may
-  therefore now **succeed**.
-- If the API returns nothing, `getViewAuto` throws, the resolver fails, and
-  the `ask()` promise **never settles** (§9).
-- If the add itself returns falsy, the resolver emits `err_view_invalid` and
-  resolves **`undefined`** (not `false`).
+**1.14 (runtime-verified 2026-09-28, static and app mode)**: `view_add`
+now looks the ID up in the loaded project and, if it's missing, **fetches
+it from the MapX API** (`getViewRemote`). Results:
 
-Until this is re-tested, don't rely on either outcome. Verify every add.
+| Case | `view_add` result | `view_added` | On map |
+|---|---|---|---|
+| View in the connected project | `true` | ✅ | ✅ |
+| **Public view from another project** | `true` | ✅ | ✅ |
+| Non-existent ID | **never settles**; `err_resolver_failed` message: `View not found: "MX-…"` | ❌ | ❌ |
+| View already open | `true` | ✅ fires again | ✅ |
+
+So **cross-project loading of public views works in 1.14**; the March 2026
+limitation no longer applies. Filters, transparency and legends also
+worked on those remotely-fetched views. Not tested: a view that exists but
+is **not** readable by guests (no fixture was available). Expect the
+"not found" hang, but verify.
+
+> *Evidence*: `tests/runtime/` in this repo (`node run.mjs`), fixture
+> `MX-KEG0W-U2098-JKIYJ` (public, owned by the CDC project) added while
+> connected to ECO-DRR and HOME.
+
+**Related gotcha: inaccessible projects fall back silently.** If the
+Manager's `project=` URL param names a project the current user can't open,
+MapX loads the public **HOME** project instead, with no error. Check
+`await mapx.ask("get_project")` (app mode) after `ready` if it matters.
 
 **Defensive verification pattern (`safeViewAdd`)**: combine the resolver's
 return value, the `view_added` event, the `message` error channel, and a
-timeout. Also treat an already-open view as success: `view_added` does not
-fire again for it.
+timeout. (`view_added` fires even when the view was already open.)
 
 ```javascript
-async function safeViewAdd(mapx, idView, timeoutMs = 8000) {
-  // Already on the map? view_added won't fire again.
-  const visible = await askWithTimeout(mapx, "get_views_with_visible_layer", {}, 4000)
-    .catch(() => []);
-  if (visible.includes(idView)) return true;
-
+function safeViewAdd(mapx, idView, timeoutMs = 8000) {
   return new Promise((resolve) => {
     let settled = false;
     const finish = (ok, why) => {
@@ -430,12 +436,16 @@ view-listing and search endpoints require authentication parameters
 
 **Workaround**: Use the SDK's `get_views` method through the iframe,
 which authenticates automatically via the MapX app session. To dump a
-full project catalogue programmatically, load the SDK in a headless
-browser (Playwright), wait for `ready`, and call `get_views`:
+full project catalogue programmatically, load the SDK in a browser
+(Playwright), wait for `ready`, and call `get_views`. The host page must be
+a **secure context** (serve it from `http://localhost`, not
+`page.setContent()`/`about:blank`); see the note below.
 
 ```javascript
-// In a Playwright test or script:
-await page.setContent(`
+// In a Playwright test or script. Serve this HTML from http://localhost
+// (e.g. a tiny node:http server) and page.goto() it:
+await page.goto("http://localhost:PORT/probe.html");
+/* probe.html:
   <div id="c"></div>
   <script src="https://app.mapx.org/sdk/mxsdk.umd.js"></script>
   <script>
@@ -449,16 +459,18 @@ await page.setContent(`
       window._done = true;
     });
   </script>
-`);
+*/
 await page.waitForFunction(() => window._done, { timeout: 90000 });
 const views = await page.evaluate(() => window._views);
 // views = [{id, type, data: {title: {en: "..."}, abstract: {en: "..."}}}, ...]
 ```
 
-**Important**: headless Chromium does not fire the `ready` event because
-MapX needs WebGL to render the map. Use `headless: false` (headed mode)
-for Playwright probes. See [troubleshooting.md](troubleshooting.md)
-"SDK ready event never fires in headless browsers."
+**Important**: `ready` never fires when the host page is `about:blank`
+(e.g. Playwright `page.setContent()`). MapX calls `crypto.randomUUID()`,
+which only exists in secure contexts, and the iframe app crashes during
+startup. Serve the page from `http://localhost`; **headless Chromium then
+works** (ready in about 4 s, verified 2026-09-28). See
+[troubleshooting.md](troubleshooting.md).
 
 This is the only reliable way to enumerate views within a single project
 without API credentials.
@@ -551,7 +563,9 @@ the view, and a naive retry runs it twice.
 > *Evidence*: `frameManager.js` `ask()` at tag `1.14.0-fix.1`:
 > `if (nR > mR) { …; reject(`too_many_request ${nR}. Max= ${mR}`); }` is
 > followed unconditionally by `fm._post(req); fm._req.push(req);`.
-> Read from source; not runtime-tested.
+> **Runtime-verified 2026-09-28** (both modes): with 11 requests pending, a
+> 12th `set_language {lang:"fr"}` was rejected with
+> `too_many_request 11. Max= 10`, and `get_language` afterwards returned `"fr"`.
 
 **Workarounds**:
 1. **Throttle** (preferred): use sequential loops (`for … of`) or a small

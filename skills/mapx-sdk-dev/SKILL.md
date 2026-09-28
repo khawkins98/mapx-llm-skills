@@ -30,8 +30,10 @@ This skill was first runtime-tested against the deployed MapX SDK
 **1.13.19** (March 2026). It was then re-checked against the upstream
 source at tag **1.14.0-fix.1**, which is the version deployed at
 `app.mapx.org/sdk/mxsdk.umd.js` / `mxsdk.modern.js` as of September 2026.
-Where a 1.14 behaviour comes from reading the source rather than a runtime
-test, the reference files say so. The SDK does not pin versions in its CDN
+The key 1.14 behaviours (static vs app parameters, cross-project views,
+hanging resolvers, request ceiling, projections, `set_project`) were then
+**runtime-verified on 2026-09-28** in both modes with `tests/runtime/`.
+Anything still based only on the source is marked as such. The SDK does not pin versions in its CDN
 URLs, so the deployed version may change without notice. The npm package
 `@fxi/mxsdk` lags behind (latest `1.13.14-alpha.10`); load the SDK from
 `app.mapx.org` so the Manager matches the deployed worker.
@@ -92,5 +94,7 @@ or any non-serializable value through the bridge. See
 - Filters read different params in static vs app mode: send `value` **and** `from`/`to` (numeric) or `value` **and** `values` + `attribute` (text)
 - Prefer `static: true` unless you need app-only features (login, `set_project`, view list management)
 - Call `map_wait_idle()` after camera moves and before rendered-data queries (it does not wait for tiles)
-- Check `view_add` returned `=== true`, and confirm with the `view_added` event
+- Check `view_add` returned `=== true`, and confirm with the `view_added` event (public views from other projects load on 1.14; bogus IDs hang)
+- Passthrough uses MapLibre v5: `setProjection({ type: "globe" })`; the string form is silently ignored
+- Keep `map_fly_to` durations under 10 s (longer flights make the call hang)
 - View types and their capabilities are documented in [views-and-layers.md](views-and-layers.md)

@@ -58,7 +58,7 @@ await mapx.ask("map", { method: "setProjection", parameters: [{ type: "globe" }]
 
 // Read current
 const proj = await mapx.ask("map", { method: "getProjection" });
-// => { type: "globe" } or { type: "mercator" } (may be undefined = mercator)
+// => { type: "globe" } or { type: "mercator" }; undefined on a fresh map (= mercator)
 
 // Toggle
 const current = await mapx.ask("map", { method: "getProjection" });
@@ -67,8 +67,10 @@ await mapx.ask("map", { method: "setProjection", parameters: [{ type: next }] })
 ```
 
 > **Pre-1.14 note**: up to MapX 1.13.x (Mapbox GL JS v2) the string form
-> `setProjection("globe")` and `getProjection().name` were correct. Code
-> written against those versions needs updating.
+> `setProjection("globe")` and `getProjection().name` were correct. On 1.14
+> the string form is **silently ignored**: no error, and the map stays
+> mercator (runtime-verified 2026-09-28). Code written against earlier
+> versions needs updating.
 
 ## 3D Modes
 

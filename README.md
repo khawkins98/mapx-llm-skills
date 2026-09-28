@@ -9,7 +9,7 @@ I put these skills together while embedding MapX maps for disaster risk reductio
 The MapX SDK has [documentation in the GitHub source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk), including a README and inline code comments. That said, there are some gaps — there's no standalone method catalog, no public API for view discovery, and some features are easier to find if you already know the resolver names. These skills try to fill in those gaps based on what I've learned from reading the source and testing.
 
 A few examples of things I had to figure out by experimentation:
-- `view_add` did nothing for views outside the current project on 1.13.19 (no error); on 1.14 it can resolve `undefined` or hang instead of rejecting
+- `view_add` did nothing for views outside the current project on 1.13.19 (no error); on 1.14 public ones load, but a bad ID makes the call hang forever
 - Resolver failures (and resolvers missing in static mode) make `ask()` hang forever rather than reject
 - The filter and transparency resolvers read different parameters in static and app mode
 - `toggle_draw_mode` is referenced in older wiki examples but was removed from the SDK
@@ -143,6 +143,7 @@ If you're working on the skill content in this repo:
 
 3. **Iterate** — edit skill files and verify the skills activate and produce correct output.
    - Run `scripts/check-resolvers.sh [ref]` to confirm every `ask("…")` resolver in the skills exists upstream (defaults to `main`; pass a tag like `1.14.0-fix.1`).
+   - Run `tests/runtime` (`npm install && node run.mjs`) to re-verify documented behaviour against the live SDK in static and app mode. See [tests/runtime/README.md](tests/runtime/README.md).
    - In Copilot CLI you can also run `/skills reload` during a session after editing a skill instead of reinstalling immediately.
 
 4. **Publish** — push to the repo. To pick up changes in Copilot CLI after a pull: `copilot plugin install /path/to/repo` (re-run install to refresh the cache).
@@ -180,7 +181,7 @@ The MapX SDK uses a **resolver pattern**:
 
 - **Hanging promises**: failed or unknown resolvers never settle `ask()`; use a timeout wrapper
 - **Static vs app mode**: app-only resolvers hang in static mode; filters and transparency take different params per mode
-- **Cross-project scope**: `view_add` for views outside the connected project did nothing on 1.13.19; 1.14 fetches them remotely (not yet re-tested)
+- **Cross-project scope**: on 1.14, public views from other projects load via `view_add` (runtime-verified); on 1.13.19 they did nothing. Non-existent IDs hang
 - **No native events**: Parent page can't listen to MapLibre `moveend`, `zoomend`, etc.
 - **No click callbacks on passthrough layers**: `map.on("click", ...)` not possible
 - **No `toggle_draw_mode`**: Was removed from the SDK after 2020; even when it existed, it returned only a boolean and couldn't pass drawn geometry back to the parent page

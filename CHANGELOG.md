@@ -26,11 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Agent standard**: Added `AGENTS.md` machine-readable skill index at repository root and symlinked `CLAUDE.md`.
 - **Security & limits**: Documented the `maxSimultaneousRequest` ceiling (including that rejected requests still execute), the `safeViewAdd` pattern, and Content-Security-Policy (CSP) header requirements.
 - **Tooling**: `scripts/check-resolvers.sh` checks every documented resolver name against the upstream source.
+- **Runtime verification**: `tests/runtime/` (Playwright, static + app mode against live app.mapx.org). Results from 2026-09-28 are committed and now back the docs. Findings: public cross-project views load on 1.14; filter/transparency parameter splits and app-mode slider snapping; rejected `too_many_request` calls still execute; string `setProjection` is ignored; `map_fly_to` > 10 s hangs; `set_project` can stay pending; inaccessible `project=` silently loads HOME; `ready` needs a secure-context host page (headless works).
 
 ### Fixed
 - **API signatures**: Corrected `get_views_with_visible_layer` return type from object array to string array (`["MX-..."]`), `language_change` payload property to `new_language`, and `set_country_highlight` direct array argument signature.
 - **Tool permissions**: `mapx-sdk-dev` `allowed-tools` lists only read-only tools (`Read`, `Grep`, `Glob`, scoped `WebFetch`). `allowed-tools` pre-approves tools while the skill is active, so an auto-invoked reference skill should not pre-approve `Edit`/`Write`.
-- **Corrections from source review**: resolvers missing in static mode hang rather than reject; `map_wait_idle` only waits while the camera moves; `view_add` resolves `undefined` on failure and fetches unknown IDs remotely in 1.14 (cross-project claim marked for runtime re-test); `set_project` return values and dialogs; `map_set_bounds_array` semantics; spotlight is not required for `click_attributes`; invented `get_views` fields removed.
+- **Corrections from source review**: resolvers missing in static mode hang rather than reject; `map_wait_idle` only waits while the camera moves; `view_add` resolves `undefined` on failure, and public views from other projects now load (the "cross-project fails silently" rule is retired); `set_project` return values and dialogs; `map_set_bounds_array` semantics; spotlight is not required for `click_attributes`; invented `get_views` fields removed.
 - **Promise lifecycle & memory**: Added `clearTimeout` cleanup in `askWithTimeout`, refactored `safeViewAdd` away from async promise executor anti-pattern, and eliminated DOM thrashing in scaffold `view-buttons.js`.
 
 ## [1.1.0] - 2026-04-08

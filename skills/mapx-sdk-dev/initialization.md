@@ -162,7 +162,10 @@ moving.
 
 ## Finding Project IDs
 
-Project IDs look like `MX-XXX-XXX-XXX-XXX-XXX`. To find yours:
+Project IDs look like `MX-XXX-XXX-XXX-XXX-XXX`. If the project isn't readable
+by the current (usually guest) user, MapX silently loads the public HOME
+project instead: no error, just the wrong views. In app mode, confirm with
+`await mapx.ask("get_project")` after `ready`. To find yours:
 
 1. Go to https://app.mapx.org
 2. Open or create a project

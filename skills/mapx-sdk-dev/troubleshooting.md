@@ -13,20 +13,19 @@ Common issues organized by symptom.
 - Verify the project ID is valid (visit the URL directly in a browser)
 - Ensure you're not calling `new mxsdk.Manager()` more than once
 
-**Symptom**: `ready` never fires in headless Chromium (Playwright/Puppeteer).
+**Symptom**: `ready` never fires in Playwright/Puppeteer.
 
-- MapX requires WebGL to render the map. Headless Chromium doesn't
-  provide a real GPU context, so the MapX app inside the iframe never
-  finishes initializing and `ready` never fires.
-- **Fix**: use `headless: false` (headed mode). The browser window can
-  be off-screen or minimized, but it needs a real rendering context.
-- The SDK script loads fine in headless (you can verify `typeof mxsdk`
-  is `"object"`), and the Manager is created, but the iframe app stalls.
+- **Cause**: the host page isn't a secure context. With `page.setContent()`
+  (an `about:blank` page) the iframe logs `crypto.randomUUID is not a
+  function` and then `Cannot access '…' before initialization`, and never
+  reaches `ready`.
+- **Fix**: serve the host page from `http://localhost` (a few lines of
+  `node:http`) and `page.goto()` it. Headless Chromium works fine that way.
 
-> *Evidence*: Tested April 2026 with Playwright 1.58 on macOS. In
-> headless mode, `window._status` stayed at "manager created" for 90s
-> before timeout. Switching to `headless: false` with the same code
-> produced `ready` in ~4 seconds and returned 85 views.
+> *Evidence*: Verified 2026-09-28 with Playwright 1.62, headless: `ready`
+> in ~4 s from `http://localhost`, never from `setContent()` (even headed).
+> An April 2026 note here blamed headless WebGL; the secure-context
+> requirement is the actual cause on 1.14.
 
 **Symptom**: `ready` fires but SDK calls hang or timeout.
 
@@ -50,10 +49,12 @@ Common issues organized by symptom.
 - Check the return value: `true` = added, `undefined` = failed (look for an
   `err_view_invalid` message). A call that **never** returns means the view
   lookup threw.
-- **Common cause**: the view ID belongs to a different project. On 1.13.19
-  this did nothing at all. The 1.14 source fetches unknown IDs from the API,
-  so it may now load or hang instead (not yet re-tested). See
+- A **non-existent** ID makes `view_add` hang (message `View not found`).
+  Public views from **other projects do load** on 1.14 (runtime-verified);
+  on 1.13.19 they did nothing. See
   [Limitation §1](limitations-and-workarounds.md#1-views-outside-the-connected-project).
+- Check which project actually loaded (`get_project`, app mode): an
+  inaccessible `project=` silently falls back to HOME.
 - Verify the view ID is correct (check for typos in the MX-XXXXX format)
 - Use `get_views()` to list all views in the current project
 - Check that the view hasn't been unpublished or deleted from MapX
@@ -70,6 +71,11 @@ Common issues organized by symptom.
   (text). `{from, to}` alone does nothing in app mode. Send both forms.
 - In app mode the numeric filter always applies to the view's **styled**
   attribute; `attribute` is ignored
+- In app mode the range **snaps to the slider step**, `(min + max) / 1000`
+  of the attribute. A narrow range (e.g. `[2, 60]` on a 0–153 290 attribute)
+  collapses to `0..0` and hides nearly everything
+- In app mode, sending only the static-mode text params (`values`) **clears**
+  the text filter
 - In static mode, a text filter without `attribute` throws and hangs
 - For text: values must exactly match the attribute data (case-sensitive)
 - `null` does not clear a numeric filter; reset to the full min/max range

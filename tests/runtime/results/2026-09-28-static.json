@@ -1,0 +1,895 @@
+{
+  "mode": "static",
+  "startedAt": "2026-09-28T14:14:14.490Z",
+  "readyMs": 4462,
+  "landedProjectA": "pending",
+  "basics": {
+    "version": "1.14.0-fix.1",
+    "map_wait_idle_still": {
+      "status": "resolved",
+      "value": true,
+      "ms": 0,
+      "messages": [],
+      "events": []
+    },
+    "getProjection_fresh": {
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 0,
+      "messages": [],
+      "events": []
+    },
+    "setProjection_object": {
+      "status": "resolved",
+      "value": true,
+      "ms": 2209,
+      "messages": [],
+      "events": []
+    },
+    "getProjection_after_object": {
+      "status": "resolved",
+      "value": {
+        "type": "globe"
+      },
+      "ms": 847,
+      "messages": [],
+      "events": []
+    },
+    "setProjection_string": {
+      "status": "resolved",
+      "value": true,
+      "ms": 846,
+      "messages": [],
+      "events": []
+    },
+    "getProjection_after_string": {
+      "status": "resolved",
+      "value": "mercator",
+      "ms": 2,
+      "messages": [],
+      "events": []
+    },
+    "projectionEffect": {
+      "mercatorObject": [
+        834,
+        46
+      ],
+      "globeObject": [
+        607,
+        184
+      ],
+      "mercatorObjectAgain": [
+        834,
+        46
+      ],
+      "globeString": [
+        834,
+        46
+      ]
+    },
+    "get_views_id_open": {
+      "status": "pending",
+      "ms": 8002,
+      "messages": [
+        {
+          "level": "error",
+          "key": "err_resolver_not_found",
+          "vars": {
+            "idRequest": 20,
+            "idResolver": "get_views_id_open"
+          }
+        }
+      ],
+      "events": []
+    },
+    "nonexistent_resolver": {
+      "status": "pending",
+      "ms": 8002,
+      "messages": [
+        {
+          "level": "error",
+          "key": "err_resolver_not_found",
+          "vars": {
+            "idRequest": 21,
+            "idResolver": "definitely_not_a_resolver"
+          }
+        }
+      ],
+      "events": []
+    },
+    "get_sdk_methods": {
+      "status": "resolved",
+      "count": 89,
+      "includesPanels": false,
+      "includesSetProject": false
+    },
+    "map_fly_to_12s": {
+      "status": "pending",
+      "ms": 20002,
+      "messages": [
+        {
+          "level": "error",
+          "key": "err_resolver_failed",
+          "vars": {
+            "idRequest": 23,
+            "idResolver": "map_fly_to",
+            "msg": "timeout"
+          }
+        }
+      ],
+      "events": []
+    }
+  },
+  "tooManyRequest": {
+    "fired": [
+      {
+        "resolver": "map_fly_to",
+        "status": "resolved",
+        "value": {
+          "center": {
+            "lng": 100,
+            "lat": 20
+          },
+          "zoom": 4,
+          "duration": 8000
+        }
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "map_wait_idle",
+        "status": "resolved",
+        "value": true
+      },
+      {
+        "resolver": "set_language",
+        "status": "rejected",
+        "error": "too_many_request 11. Max= 10",
+        "errorType": "string"
+      }
+    ],
+    "languageAfter": "fr"
+  },
+  "numericFilter": {
+    "add": {
+      "status": "resolved",
+      "value": true,
+      "view_added": true
+    },
+    "fromToOnly": {
+      "call": {
+        "from": 1,
+        "to": 50
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 87,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],50],[\">=\",[\"get\",\"aal_lower_bound_million\"],1]]]]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">=\",[\"get\",\"aal_lower_bound_million\"],0],[\"<=\",[\"get\",\"aal_lower_bound_million\"],126],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],50],[\">=\",[\"get\",\"aal_lower_bound_million\"],1]]]]],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],126],[\"<=\",[\"get\",\"aal_lower_bound_million\"],12986],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],50],[\">=\",[\"get\",\"aal_lower_bound_million\"],1]]]]],[\"all\"],[\"all\"",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],12986],[\"<=\",[\"get\",\"aal_lower_bound_million\"],40842],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],50],[\">=\",[\"get\",\"aal_lower_bound_million\"],1]]]]],[\"all\"],[\"al",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],40842],[\"<=\",[\"get\",\"aal_lower_bound_million\"],84157],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],50],[\">=\",[\"get\",\"aal_lower_bound_million\"],1]]]]],[\"all\"],[\"al",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],84157],[\"<=\",[\"get\",\"aal_lower_bound_million\"],172061],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],50],[\">=\",[\"get\",\"aal_lower_bound_million\"],1]]]]],[\"all\"],[\"a"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          1,
+          50
+        ]
+      }
+    },
+    "valueOnly": {
+      "call": {
+        "value": [
+          2,
+          60
+        ]
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 78,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],60],[\">=\",[\"get\",\"aal_lower_bound_million\"],2]]]]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">=\",[\"get\",\"aal_lower_bound_million\"],0],[\"<=\",[\"get\",\"aal_lower_bound_million\"],126],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],60],[\">=\",[\"get\",\"aal_lower_bound_million\"],2]]]]],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],126],[\"<=\",[\"get\",\"aal_lower_bound_million\"],12986],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],60],[\">=\",[\"get\",\"aal_lower_bound_million\"],2]]]]],[\"all\"],[\"all\"",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],12986],[\"<=\",[\"get\",\"aal_lower_bound_million\"],40842],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],60],[\">=\",[\"get\",\"aal_lower_bound_million\"],2]]]]],[\"all\"],[\"al",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],40842],[\"<=\",[\"get\",\"aal_lower_bound_million\"],84157],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],60],[\">=\",[\"get\",\"aal_lower_bound_million\"],2]]]]],[\"all\"],[\"al",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],84157],[\"<=\",[\"get\",\"aal_lower_bound_million\"],172061],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],60],[\">=\",[\"get\",\"aal_lower_bound_million\"],2]]]]],[\"all\"],[\"a"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          2,
+          60
+        ]
+      }
+    },
+    "valueWithOtherAttribute": {
+      "call": {
+        "value": [
+          3,
+          70
+        ],
+        "from": 3,
+        "to": 70,
+        "attribute": "iso3cd"
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 137,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"all\",[\"has\",\"iso3cd\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"iso3cd\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"iso3cd\"],70],[\">=\",[\"get\",\"iso3cd\"],3]]]]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">=\",[\"get\",\"aal_lower_bound_million\"],0],[\"<=\",[\"get\",\"aal_lower_bound_million\"],126],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"iso3cd\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"iso3cd\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"iso3cd\"],70],[\">=\",[\"get\",\"iso3cd\"],3]]]]],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],126],[\"<=\",[\"get\",\"aal_lower_bound_million\"],12986],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"iso3cd\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"iso3cd\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"iso3cd\"],70],[\">=\",[\"get\",\"iso3cd\"],3]]]]],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],12986],[\"<=\",[\"get\",\"aal_lower_bound_million\"],40842],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"iso3cd\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"iso3cd\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"iso3cd\"],70],[\">=\",[\"get\",\"iso3cd\"],3]]]]],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],40842],[\"<=\",[\"get\",\"aal_lower_bound_million\"],84157],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"iso3cd\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"iso3cd\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"iso3cd\"],70],[\">=\",[\"get\",\"iso3cd\"],3]]]]],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],84157],[\"<=\",[\"get\",\"aal_lower_bound_million\"],172061],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"iso3cd\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"iso3cd\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"iso3cd\"],70],[\">=\",[\"get\",\"iso3cd\"],3]]]]],[\"all\"],[\"all\"]]"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          3,
+          70
+        ]
+      }
+    },
+    "valueWideRange": {
+      "call": {
+        "value": [
+          20000,
+          100000
+        ]
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 99,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],100000],[\">=\",[\"get\",\"aal_lower_bound_million\"],20000]]]]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">=\",[\"get\",\"aal_lower_bound_million\"],0],[\"<=\",[\"get\",\"aal_lower_bound_million\"],126],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],100000],[\">=\",[\"get\",\"aal_lower_bound_million\"],20000]]]]],[\"all\"],[",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],126],[\"<=\",[\"get\",\"aal_lower_bound_million\"],12986],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],100000],[\">=\",[\"get\",\"aal_lower_bound_million\"],20000]]]]],[\"all\"",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],12986],[\"<=\",[\"get\",\"aal_lower_bound_million\"],40842],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],100000],[\">=\",[\"get\",\"aal_lower_bound_million\"],20000]]]]],[\"al",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],40842],[\"<=\",[\"get\",\"aal_lower_bound_million\"],84157],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],100000],[\">=\",[\"get\",\"aal_lower_bound_million\"],20000]]]]],[\"al",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],84157],[\"<=\",[\"get\",\"aal_lower_bound_million\"],172061],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],100000],[\">=\",[\"get\",\"aal_lower_bound_million\"],20000]]]]],[\"a"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          20000,
+          100000
+        ]
+      }
+    },
+    "portable": {
+      "call": {
+        "value": [
+          30000,
+          90000
+        ],
+        "from": 30000,
+        "to": 90000
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 88,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],90000],[\">=\",[\"get\",\"aal_lower_bound_million\"],30000]]]]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">=\",[\"get\",\"aal_lower_bound_million\"],0],[\"<=\",[\"get\",\"aal_lower_bound_million\"],126],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],90000],[\">=\",[\"get\",\"aal_lower_bound_million\"],30000]]]]],[\"all\"],[\"",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],126],[\"<=\",[\"get\",\"aal_lower_bound_million\"],12986],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],90000],[\">=\",[\"get\",\"aal_lower_bound_million\"],30000]]]]],[\"all\"]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],12986],[\"<=\",[\"get\",\"aal_lower_bound_million\"],40842],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],90000],[\">=\",[\"get\",\"aal_lower_bound_million\"],30000]]]]],[\"all",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],40842],[\"<=\",[\"get\",\"aal_lower_bound_million\"],84157],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],90000],[\">=\",[\"get\",\"aal_lower_bound_million\"],30000]]]]],[\"all",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],84157],[\"<=\",[\"get\",\"aal_lower_bound_million\"],172061],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],90000],[\">=\",[\"get\",\"aal_lower_bound_million\"],30000]]]]],[\"al"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          30000,
+          90000
+        ]
+      }
+    },
+    "nullClear": {
+      "call": {
+        "from": null,
+        "to": null
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 88,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],null],[\">=\",[\"get\",\"aal_lower_bound_million\"],null]]]]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">=\",[\"get\",\"aal_lower_bound_million\"],0],[\"<=\",[\"get\",\"aal_lower_bound_million\"],126],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],null],[\">=\",[\"get\",\"aal_lower_bound_million\"],null]]]]],[\"all\"],[\"al",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],126],[\"<=\",[\"get\",\"aal_lower_bound_million\"],12986],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],null],[\">=\",[\"get\",\"aal_lower_bound_million\"],null]]]]],[\"all\"],[",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],12986],[\"<=\",[\"get\",\"aal_lower_bound_million\"],40842],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],null],[\">=\",[\"get\",\"aal_lower_bound_million\"],null]]]]],[\"all\"]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],40842],[\"<=\",[\"get\",\"aal_lower_bound_million\"],84157],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],null],[\">=\",[\"get\",\"aal_lower_bound_million\"],null]]]]],[\"all\"]",
+        "[\"all\",[\"all\",[\"has\",\"aal_lower_bound_million\"]],[\">\",[\"get\",\"aal_lower_bound_million\"],84157],[\"<=\",[\"get\",\"aal_lower_bound_million\"],172061],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"all\",[\"has\",\"aal_lower_bound_million\"],[\"any\",[\"!=\",[\"typeof\",[\"get\",\"aal_lower_bound_million\"]],\"number\"],[\"all\",[\"<=\",[\"get\",\"aal_lower_bound_million\"],null],[\">=\",[\"get\",\"aal_lower_bound_million\"],null]]]]],[\"all\""
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          null,
+          null
+        ]
+      }
+    },
+    "summary": {
+      "status": "resolved",
+      "attribute_stat": {
+        "min": 0,
+        "max": 153290,
+        "attribute": "aal_lower_bound_million"
+      },
+      "keys": [
+        "id",
+        "type",
+        "timestamp",
+        "attributes",
+        "attributes_types",
+        "row_count",
+        "attribute_stat",
+        "extent_sp",
+        "_timing",
+        "_origin"
+      ]
+    }
+  },
+  "transparency": {
+    "value50": {
+      "status": "resolved",
+      "messages": [],
+      "getter": 50,
+      "opacity": [
+        {},
+        {},
+        {},
+        {},
+        {}
+      ]
+    },
+    "value50_opacity05": {
+      "status": "resolved",
+      "messages": [],
+      "getter": 0.5,
+      "opacity": [
+        {
+          "circle-opacity": 0.5
+        },
+        {
+          "circle-opacity": 0.5
+        },
+        {
+          "circle-opacity": 0.5
+        },
+        {
+          "circle-opacity": 0.5
+        },
+        {
+          "circle-opacity": 0.5
+        }
+      ]
+    },
+    "value0": {
+      "status": "resolved",
+      "messages": [],
+      "getter": 1,
+      "opacity": [
+        {
+          "circle-opacity": 1
+        },
+        {
+          "circle-opacity": 1
+        },
+        {
+          "circle-opacity": 1
+        },
+        {
+          "circle-opacity": 1
+        },
+        {
+          "circle-opacity": 1
+        }
+      ]
+    }
+  },
+  "textFilter": {
+    "add": {
+      "status": "resolved",
+      "value": true,
+      "view_added": true
+    },
+    "legendValues": [
+      "Extremely High (more than 2 in 1,000)",
+      "High (3 in 10,000 to 2 in 1,000)",
+      "Medium - High (7 in 100,000 to 3 in 10,000)",
+      "Low - Medium (9 in 1,000,000 to 7 in 100,000)",
+      "Low (0 to 9 in 1,000,000)",
+      "No Risk",
+      "No Data"
+    ],
+    "valueOnly": {
+      "call": {
+        "value": [
+          "Extremely High (more than 2 in 1,000)"
+        ]
+      },
+      "status": "pending",
+      "ms": 12002,
+      "messages": [
+        {
+          "level": "error",
+          "key": "err_resolver_failed",
+          "vars": {
+            "idRequest": 70,
+            "idResolver": "set_view_layer_filter_text",
+            "msg": "Cannot access 'c' before initialization"
+          }
+        }
+      ],
+      "filterEvents": [],
+      "layerFilters": [
+        "[\"all\",[\"has\",\"cfr_label\"],[\"==\",[\"get\",\"cfr_label\"],\"No Data\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"High (3 in 10,000 to 2 in 1,000)\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Medium - High (7 in 100,000 to 3 in 10,000)\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low - Medium (9 in 1,000,000 to 7 in 100,000)\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low (0 to 9 in 1,000,000)\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"No Risk\"]]"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": "undefined"
+      }
+    },
+    "valuesWithAttribute": {
+      "call": {
+        "values": [
+          "Extremely High (more than 2 in 1,000)"
+        ],
+        "attribute": "cfr_label"
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 147,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"has\",\"cfr_label\"],[\"==\",[\"get\",\"cfr_label\"],\"No Data\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"High (3 in 10,000 to 2 in 1,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Medium - High (7 in 100,000 to 3 in 10,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low - Medium (9 in 1,000,000 to 7 in 100,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low (0 to 9 in 1,000,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"No Risk\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          "Extremely High (more than 2 in 1,000)"
+        ]
+      }
+    },
+    "valuesNoAttribute": {
+      "call": {
+        "values": [
+          "Extremely High (more than 2 in 1,000)"
+        ]
+      },
+      "status": "pending",
+      "ms": 12002,
+      "messages": [
+        {
+          "level": "error",
+          "key": "err_resolver_failed",
+          "vars": {
+            "idRequest": 76,
+            "idResolver": "set_view_layer_filter_text",
+            "msg": "Cannot access 'c' before initialization"
+          }
+        }
+      ],
+      "filterEvents": [],
+      "layerFilters": [
+        "[\"all\",[\"has\",\"cfr_label\"],[\"==\",[\"get\",\"cfr_label\"],\"No Data\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"High (3 in 10,000 to 2 in 1,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Medium - High (7 in 100,000 to 3 in 10,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low - Medium (9 in 1,000,000 to 7 in 100,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low (0 to 9 in 1,000,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"No Risk\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          "Extremely High (more than 2 in 1,000)"
+        ]
+      }
+    },
+    "portable": {
+      "call": {
+        "value": [
+          "Extremely High (more than 2 in 1,000)"
+        ],
+        "values": [
+          "Extremely High (more than 2 in 1,000)"
+        ],
+        "attribute": "cfr_label"
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 1,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"has\",\"cfr_label\"],[\"==\",[\"get\",\"cfr_label\"],\"No Data\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"High (3 in 10,000 to 2 in 1,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Medium - High (7 in 100,000 to 3 in 10,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low - Medium (9 in 1,000,000 to 7 in 100,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low (0 to 9 in 1,000,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"No Risk\"],[\"all\"],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"]],[\"all\"],[\"all\"],[\"all\"]]"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          "Extremely High (more than 2 in 1,000)"
+        ]
+      }
+    },
+    "clear": {
+      "call": {
+        "value": [],
+        "values": [],
+        "attribute": "cfr_label"
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 139,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\"]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"has\",\"cfr_label\"],[\"==\",[\"get\",\"cfr_label\"],\"No Data\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Extremely High (more than 2 in 1,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"High (3 in 10,000 to 2 in 1,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Medium - High (7 in 100,000 to 3 in 10,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low - Medium (9 in 1,000,000 to 7 in 100,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"Low (0 to 9 in 1,000,000)\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"cfr_label\"],[\"!=\",[\"get\",\"cfr_label\"],\"No Data\"]],[\"==\",[\"get\",\"cfr_label\"],\"No Risk\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": []
+      }
+    }
+  },
+  "timeFilter": {
+    "add": {
+      "status": "resolved",
+      "value": true,
+      "view_added": true
+    },
+    "extent_time": {
+      "min": 342000,
+      "max": 1516316400
+    },
+    "attributes": [
+      "gid",
+      "ve_id",
+      "vo_id",
+      "vo_name",
+      "lat",
+      "lon",
+      "iso3",
+      "date",
+      "mx_t0",
+      "mx_t1",
+      "area_act",
+      "vei",
+      "vei_mod",
+      "ev_meth",
+      "geom",
+      "_mx_valid"
+    ],
+    "fromToOnly": {
+      "call": {
+        "hasT0": true,
+        "hasT1": true,
+        "from": 342000000,
+        "to": 758329200000
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 124,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"==\",[\"typeof\",[\"get\",\"mx_t0\"]],\"string\"],[\"==\",[\"typeof\",[\"get\",\"mx_t1\"]],\"string\"],[\"all\",[\"<=\",[\"get\",\"mx_t0\"],758329200],[\">=\",[\"get\",\"mx_t1\"],342000]]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"all\",[\"has\",\"vei\"]],[\">=\",[\"get\",\"vei\"],1],[\"<=\",[\"get\",\"vei\"],4],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"typeof\",[\"get\",\"mx_t0\"]],\"string\"],[\"==\",[\"typeof\",[\"get\",\"mx_t1\"]],\"string\"],[\"all\",[\"<=\",[\"get\",\"mx_t0\"],758329200],[\">=\",[\"get\",\"mx_t1\"],342000]]],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"vei\"]],[\">\",[\"get\",\"vei\"],4],[\"<=\",[\"get\",\"vei\"],6],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"typeof\",[\"get\",\"mx_t0\"]],\"string\"],[\"==\",[\"typeof\",[\"get\",\"mx_t1\"]],\"string\"],[\"all\",[\"<=\",[\"get\",\"mx_t0\"],758329200],[\">=\",[\"get\",\"mx_t1\"],342000]]],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          342000000,
+          758329200000
+        ]
+      }
+    },
+    "withValue": {
+      "call": {
+        "hasT0": true,
+        "hasT1": true,
+        "from": 342000000,
+        "to": 758329200000,
+        "value": [
+          342000000,
+          758329200000
+        ]
+      },
+      "status": "resolved",
+      "value": "undefined",
+      "ms": 1,
+      "messages": [],
+      "filterEvents": [
+        {
+          "type": "view_filter",
+          "filter": "[\"any\",[\"==\",[\"typeof\",[\"get\",\"mx_t0\"]],\"string\"],[\"==\",[\"typeof\",[\"get\",\"mx_t1\"]],\"string\"],[\"all\",[\"<=\",[\"get\",\"mx_t0\"],758329200],[\">=\",[\"get\",\"mx_t1\"],342000]]]"
+        }
+      ],
+      "layerFilters": [
+        "[\"all\",[\"all\",[\"has\",\"vei\"]],[\">=\",[\"get\",\"vei\"],1],[\"<=\",[\"get\",\"vei\"],4],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"typeof\",[\"get\",\"mx_t0\"]],\"string\"],[\"==\",[\"typeof\",[\"get\",\"mx_t1\"]],\"string\"],[\"all\",[\"<=\",[\"get\",\"mx_t0\"],758329200],[\">=\",[\"get\",\"mx_t1\"],342000]]],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]",
+        "[\"all\",[\"all\",[\"has\",\"vei\"]],[\">\",[\"get\",\"vei\"],4],[\"<=\",[\"get\",\"vei\"],6],[\"all\"],[\"all\"],[\"any\",[\"==\",[\"typeof\",[\"get\",\"mx_t0\"]],\"string\"],[\"==\",[\"typeof\",[\"get\",\"mx_t1\"]],\"string\"],[\"all\",[\"<=\",[\"get\",\"mx_t0\"],758329200],[\">=\",[\"get\",\"mx_t1\"],342000]]],[\"all\"],[\"all\"],[\"all\"],[\"all\"]]"
+      ],
+      "getter": {
+        "status": "resolved",
+        "value": [
+          342000000,
+          758329200000
+        ]
+      }
+    }
+  },
+  "messagesAll": [
+    {
+      "level": "error",
+      "key": "err_resolver_not_found",
+      "vars": {
+        "idRequest": 0,
+        "idResolver": "get_project"
+      }
+    },
+    {
+      "level": "error",
+      "key": "err_resolver_not_found",
+      "vars": {
+        "idRequest": 20,
+        "idResolver": "get_views_id_open"
+      }
+    },
+    {
+      "level": "error",
+      "key": "err_resolver_not_found",
+      "vars": {
+        "idRequest": 21,
+        "idResolver": "definitely_not_a_resolver"
+      }
+    },
+    {
+      "level": "error",
+      "key": "err_resolver_failed",
+      "vars": {
+        "idRequest": 23,
+        "idResolver": "map_fly_to",
+        "msg": "timeout"
+      }
+    },
+    {
+      "level": "warning",
+      "key": "warn_to_much_request",
+      "vars": {
+        "nR": 11,
+        "mR": 10
+      }
+    },
+    {
+      "level": "error",
+      "key": "err_resolver_failed",
+      "vars": {
+        "idRequest": 70,
+        "idResolver": "set_view_layer_filter_text",
+        "msg": "Cannot access 'c' before initialization"
+      }
+    },
+    {
+      "level": "error",
+      "key": "err_resolver_failed",
+      "vars": {
+        "idRequest": 76,
+        "idResolver": "set_view_layer_filter_text",
+        "msg": "Cannot access 'c' before initialization"
+      }
+    }
+  ],
+  "landedProjectB": "pending",
+  "viewAddCrossProject": {
+    "inProject": {
+      "idView": "MX-FX1HT-Z7KXL-8X22K",
+      "status": "resolved",
+      "value": true,
+      "ms": 724,
+      "messages": [],
+      "view_added": true,
+      "visible": true,
+      "apiRequests": 1
+    },
+    "otherProjectPublic": {
+      "idView": "MX-KEG0W-U2098-JKIYJ",
+      "status": "resolved",
+      "value": true,
+      "ms": 864,
+      "messages": [],
+      "view_added": true,
+      "visible": true,
+      "apiRequests": 1
+    },
+    "bogus": {
+      "idView": "MX-ZZZZZ-ZZZZZ-ZZZZZ",
+      "status": "pending",
+      "ms": 30002,
+      "messages": [
+        {
+          "level": "error",
+          "key": "err_resolver_failed",
+          "vars": {
+            "idRequest": 5,
+            "idResolver": "view_add",
+            "msg": "View not found: \"MX-ZZZZZ-ZZZZZ-ZZZZZ\""
+          }
+        }
+      ],
+      "view_added": false,
+      "visible": false,
+      "apiRequests": 1
+    },
+    "alreadyOpen": {
+      "status": "resolved",
+      "value": true,
+      "view_added_again": true
+    }
+  },
+  "setProject": {
+    "toPublic": {
+      "status": "pending",
+      "ms": 30002,
+      "messages": [
+        {
+          "level": "error",
+          "key": "err_resolver_not_found",
+          "vars": {
+            "idRequest": 8,
+            "idResolver": "set_project"
+          }
+        }
+      ],
+      "events": [],
+      "project_changed": false,
+      "currentProject": "pending"
+    },
+    "toInaccessible": {
+      "status": "pending",
+      "ms": 20002,
+      "messages": [
+        {
+          "level": "error",
+          "key": "err_resolver_not_found",
+          "vars": {
+            "idRequest": 10,
+            "idResolver": "set_project"
+          }
+        }
+      ],
+      "events": [],
+      "project_changed": false,
+      "currentProject": "pending"
+    }
+  },
+  "headless": true
+}
