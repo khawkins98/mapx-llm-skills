@@ -21,6 +21,24 @@
    then `npm install && npm run build` to verify the generated project
    compiles. Try `npm run dev` and confirm the iframe loads.
 
+## Runtime verification needed (from the 1.14 source review)
+
+These were derived from reading the `1.14.0-fix.1` source and should be
+confirmed against the live SDK, in **both** static and app mode:
+
+- [ ] **Cross-project `view_add`**: the source now fetches unknown IDs via
+      `getViewRemote`. Test a public view from another project, a private
+      one, and a bogus ID. Record: resolves `true` / `undefined` / hangs?
+      Then update limitations §1, AGENTS.md rule 5 and README.
+- [ ] **Numeric filter**: confirm `{from, to}` alone is a no-op in app mode
+      and `value` works in both.
+- [ ] **Text filter**: confirm `values` + `attribute` in static mode, and
+      the hang when `attribute` is omitted (potential-issues §6).
+- [ ] **Transparency**: confirm static mode treats the number as 0–1 opacity.
+- [ ] **`too_many_request`**: confirm the rejected request still executes.
+- [ ] **Time filter in app mode**: confirm the slider needs `value`.
+- [ ] **`getProjection()` on a fresh map**: `undefined` or `{ type: "mercator" }`?
+
 ## Content gaps to fill
 
 - [x] **`set_project` method** — documented in sdk-methods.md and limitations-and-workarounds.md (app mode only, closes views, fires `project_changed`).

@@ -1,71 +1,86 @@
 # Limitations and Workarounds
 
-> **SDK version context**: These limitations were validated against the
-> deployed MapX SDK at `app.mapx.org/sdk/mxsdk.umd.js` and `mxsdk.modern.js`
-> (embedded version string **1.14.0-fix.1**) in August 2026 (originally
-> observed on 1.13.19). MapX uses MapLibre GL JS under the hood. The SDK
-> does not pin versions in its CDN URLs, so behavior may change without notice.
-> The GitHub default branch is `main`. Where a limitation contradicts the
-> SDK source or docs, the evidence and reasoning are noted inline.
+> **SDK version context**: These limitations were first observed at
+> runtime against the deployed SDK **1.13.19** (March 2026). They were
+> re-checked against the upstream source at tag **1.14.0-fix.1** (deployed
+> August 2026), and each section says whether a 1.14 statement comes from
+> the source or from a runtime test. MapX switched from Mapbox GL JS v2 to
+> MapLibre GL JS v5 in 1.14. The SDK does not pin versions in its CDN URLs,
+> so behaviour may change without notice. The GitHub default branch is `main`.
 
-## 1. Cross-Project View Scope
+## 1. Views Outside the Connected Project
 
-**Problem**: `view_add` only works for views in the currently loaded project.
-If you pass a view ID from a different project, the call returns without
-error but does nothing — no network requests, no thrown error, no visual
-change.
+**Observed on 1.13.19 (runtime)**: `view_add` with a view ID from a
+different project returned without error and did nothing: no thrown error,
+no visual change.
 
 > *Evidence*: Observed 2026-03-19 when attempting to load Eco-DRR story maps
 > from the HOME project. Documented in `mapx-demo-embed/methodology.md` §8.
-> The SDK source does not document this behavior — the resolver accepts any
-> `idView` string without validation.
 
-**Why**: The MapX app inside the iframe only resolves views from its loaded
-project. Cross-project references are silently ignored.
+**1.14 source (not yet runtime-tested)**: `view_add` → `viewAddAuto` →
+`getViewAuto` looks the ID up in the loaded project and, if it's missing,
+**fetches it from the MapX API** (`getViewRemote`, `map_helpers/index.js`).
+From the code:
+- If the API returns the view (e.g. a public view from another project),
+  app mode adds it to the view list and opens it. The cross-project call may
+  therefore now **succeed**.
+- If the API returns nothing, `getViewAuto` throws, the resolver fails, and
+  the `ask()` promise **never settles** (§9).
+- If the add itself returns falsy, the resolver emits `err_view_invalid` and
+  resolves **`undefined`** (not `false`).
 
-**Defensive verification pattern (`safeViewAdd`)**:
-Listen for the SDK's `view_added` event with a fallback timeout to confirm
-whether the view actually loaded:
+Until this is re-tested, don't rely on either outcome. Verify every add.
+
+**Defensive verification pattern (`safeViewAdd`)**: combine the resolver's
+return value, the `view_added` event, the `message` error channel, and a
+timeout. Also treat an already-open view as success: `view_added` does not
+fire again for it.
 
 ```javascript
-function safeViewAdd(mapx, idView, timeoutMs = 4000) {
+async function safeViewAdd(mapx, idView, timeoutMs = 8000) {
+  // Already on the map? view_added won't fire again.
+  const visible = await askWithTimeout(mapx, "get_views_with_visible_layer", {}, 4000)
+    .catch(() => []);
+  if (visible.includes(idView)) return true;
+
   return new Promise((resolve) => {
     let settled = false;
-
-    const timer = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        cleanup();
-        console.warn(`view_add timed out for ${idView} -- likely outside connected project`);
-        resolve(false);
-      }
-    }, timeoutMs);
-
-    function onAdded(data) {
-      if (data?.idView === idView && !settled) {
-        settled = true;
-        cleanup();
-        resolve(true);
-      }
-    }
-
-    function cleanup() {
+    const finish = (ok, why) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
       mapx.off("view_added", onAdded);
-    }
+      mapx.off("message", onMessage);
+      if (!ok) console.warn(`view_add failed for ${idView}: ${why}`);
+      resolve(ok);
+    };
+    const onAdded = (d) => d?.idView === idView && finish(true);
+    const onMessage = (m) => {
+      if (m?.level !== "error") return;
+      const k = m.key;
+      if (k === "err_view_invalid" ||
+          (k === "err_resolver_failed" && m.vars?.idResolver === "view_add")) {
+        finish(false, k);
+      }
+    };
+    const timer = setTimeout(() => finish(false, "timeout"), timeoutMs);
 
     mapx.on("view_added", onAdded);
-    mapx.ask("view_add", { idView }).catch((err) => {
-      if (!settled) {
-        settled = true;
-        cleanup();
-        console.warn(`view_add rejected for ${idView}:`, err);
-        resolve(false);
-      }
-    });
+    mapx.on("message", onMessage);
+    mapx.ask("view_add", { idView })
+      .then((res) => { if (res !== true) finish(false, `resolved ${res}`); })
+      .catch((err) => finish(false, String(err))); // e.g. too_many_request
   });
 }
 ```
+
+Notes:
+- `view_add` resolves `true` just before `view_added` fires, so the event is
+  the confirmation that the layers exist. The `true` return on its own is
+  also a reasonable success signal.
+- The `message` match is by resolver name, so two concurrent `view_add`
+  calls can't be told apart there. The `view_added` payload check by
+  `idView` still disambiguates successes.
 
 **Workaround for story maps**: Load a second MapX instance in an overlay
 iframe with the target project and `?storyAutoStart=true`:
@@ -86,7 +101,8 @@ to your project.
 
 **Problem**: The parent page cannot listen to native MapLibre GL events
 (`moveend`, `zoomend`, `click`, `mousemove`, etc.). The SDK's postMessage
-bridge only supports SDK-defined events (`ready`, `click_attributes`).
+bridge only forwards MapX's own events (`ready`, `click_attributes`,
+`view_added`, … see the Events Catalog in [sdk-methods.md](sdk-methods.md)).
 
 > *Evidence*: This follows directly from the SDK's architecture — the `map`
 > resolver only supports calling methods with serializable arguments. The
@@ -296,10 +312,11 @@ Trade-offs:
 
 ## 9. SDK Promise Hangs on Resolver Exceptions
 
-**Problem**: If a resolver throws an exception (as opposed to returning
-normally), the SDK's `FrameManager` error-handling path removes the
-request from its queue but **never resolves or rejects the Promise**.
-Your `await mapx.ask(...)` call hangs forever.
+**Problem**: If a resolver throws, or **doesn't exist** (typo, removed
+method, or an app-only resolver called in static mode), the worker replies
+`success: false`. The SDK's `FrameManager` removes the request from its
+queue but **never resolves or rejects the Promise**. Your
+`await mapx.ask(...)` call hangs forever.
 
 > *Evidence*: Confirmed in the SDK source (`frameManager.js`, lines 375–380 on
 > GitHub `main` branch). The hang was observed in practice on 2026-03-19 when calling
@@ -314,25 +331,43 @@ Your `await mapx.ask(...)` call hangs forever.
 `success` is `false`, the request is cleaned up from internal state but
 `req.onError` is never invoked, leaving the Promise unfulfilled.
 
-**Workaround**: Wrap any `ask()` call that might trigger an exception
-with a timeout that clears upon settlement:
+The worker *does* send an error message alongside the failed response
+(`err_resolver_failed` with `vars.idResolver` and `vars.msg`, or
+`err_resolver_not_found` with `vars.idResolver`). The Manager re-emits it as
+a `"message"` event, so a wrapper can reject early instead of waiting out
+the full timeout.
+
+**Workaround**: Wrap any `ask()` call that might fail with a timeout that
+also listens for the error message and cleans up on settlement:
 
 ```javascript
-function askWithTimeout(mapx, resolver, opt, ms = 15000) {
+function askWithTimeout(mapx, resolver, opt = {}, ms = 15000) {
   let timer;
-  const timeoutPromise = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`${resolver} timed out`)), ms);
+  let onMessage;
+  const failFast = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${resolver} timed out after ${ms}ms`)), ms);
+    onMessage = (m) => {
+      const isErr = m?.level === "error" &&
+        (m.key === "err_resolver_failed" || m.key === "err_resolver_not_found");
+      if (isErr && m.vars?.idResolver === resolver) {
+        reject(new Error(`${resolver}: ${m.key}${m.vars?.msg ? ` (${m.vars.msg})` : ""}`));
+      }
+    };
+    mapx.on("message", onMessage);
   });
-  return Promise.race([
-    mapx.ask(resolver, opt),
-    timeoutPromise,
-  ]).finally(() => {
+  return Promise.race([mapx.ask(resolver, opt), failFast]).finally(() => {
     clearTimeout(timer);
+    mapx.off("message", onMessage);
   });
 }
 ```
 
+The error message carries the resolver name but not your request, so if
+two calls to the *same* resolver are in flight, one failure rejects both
+wrappers. That's usually acceptable, and the timeout remains the backstop.
+
 This is especially relevant for:
+- Any resolver that might not exist in the current mode (see §14)
 - `get_view_source_summary` on `rt` views — the WMS `GetCapabilities`
   call can throw on malformed responses, triggering the hang
 - Calls that pass user-supplied or dynamic arguments to resolvers,
@@ -496,26 +531,65 @@ Other language indexes may be available (e.g. `views_fr`). The
 
 ## 13. Concurrent Request Queue Ceiling (`maxSimultaneousRequest`)
 
-**Problem**: If the parent application triggers more than 10 unresolved `ask()` calls concurrently (e.g. iterating over a view catalog with `Promise.all(views.map(v => mapx.ask(...)))`), the SDK immediately rejects extra calls with:
+**Problem**: `FrameManager.ask()` counts pending requests *before* adding
+the new one, and rejects when that count is **greater than**
+`maxSimultaneousRequest` (default 10). With the default, the first call
+rejected is the one made while 11 are already pending, i.e. the 12th
+concurrent call:
 
 ```
 too_many_request 11. Max= 10
 ```
 
-> *Evidence*: Confirmed in `FrameManager.ask()` source code. The manager counts pending promises (`this._req.length`) and compares against `this.opt.maxSimultaneousRequest` (default 10).
+The rejection value is a **plain string**, not an `Error`.
+
+**The rejected request still runs.** After calling `reject()`, `ask()`
+carries on: it posts the request to the iframe and queues it. MapX executes
+it, and only your promise was rejected. A rejected `view_add` may still add
+the view, and a naive retry runs it twice.
+
+> *Evidence*: `frameManager.js` `ask()` at tag `1.14.0-fix.1`:
+> `if (nR > mR) { …; reject(`too_many_request ${nR}. Max= ${mR}`); }` is
+> followed unconditionally by `fm._post(req); fm._req.push(req);`.
+> Read from source; not runtime-tested.
 
 **Workarounds**:
-1. **Increase the ceiling**: Set `maxSimultaneousRequest: 50` in the `new Manager({ ... })` options.
-2. **Batch / throttle**: Use sequential loops (`for ... of`) or a concurrency pool (e.g. `p-limit`) instead of unbounded `Promise.all`.
+1. **Throttle** (preferred): use sequential loops (`for … of`) or a small
+   concurrency pool instead of unbounded `Promise.all`.
+2. **Raise the ceiling**: e.g. `maxSimultaneousRequest: 20` in `new Manager({ … })`.
+3. **Never blindly retry** side-effecting calls (`view_add`, `view_remove`,
+   filters, `set_project`) after `too_many_request`. Check the resulting
+   state (e.g. `get_views_with_visible_layer`) first.
 
-## 14. Static Mode vs. App Mode Method Availability
+## 14. Static Mode vs. App Mode
 
-**Problem**: Initializing with `static: true` (or pointing to `/static.html`) uses `MapxResolversStatic` instead of `MapxResolversApp`. Certain methods available in standard app mode will fail with `err_resolver_not_found` or console warnings:
+Upstream's SDK README calls **static mode the primary, recommended usage**:
+lighter and faster, with no login or user roles. Pick app mode only when you
+need its extra features.
 
-| Resolver | Static Mode (`static: true`) | App Mode (`static: false`) | Workaround in Static Mode |
+With `static: true` (or `/static.html`) MapX uses `MapxResolversStatic`
+instead of `MapxResolversApp`. Resolvers that only exist in app mode do not
+reject in static mode: the worker answers `err_resolver_not_found` and the
+promise **hangs** (§9).
+
+| Resolver | Static mode | App mode | Workaround in static mode |
 |---|---|---|---|
-| `get_views_id_open` | ❌ Fails (`err_resolver_not_found`) | ✅ Supported | Use `get_views_with_visible_layer` |
-| `set_project` | ❌ Fails (requires Shiny) | ✅ Supported | Recreate Manager iframe or use URL params |
-| `get_projects` | ❌ Fails | ✅ Supported | Pass known project IDs |
-| `get_user_*` / `set_token` | ❌ Fails | ✅ Supported | N/A (static mode is unauthenticated) |
-| `table_editor_*` | ❌ Fails | ✅ Supported | N/A |
+| `get_views_id_open` | ⏳ Hangs (`err_resolver_not_found`) | ✅ | `get_views_with_visible_layer` |
+| `set_project`, `get_project`, `get_projects` | ⏳ Hangs | ✅ | Recreate the Manager with another `project` URL param |
+| `get_user_id` / `get_user_email` / `get_user_roles` / `is_user_guest` / `get_token` / `set_token` / `show_modal_login` | ⏳ Hangs | ✅ | N/A (static mode is unauthenticated). `get_user_ip` **does** work in static. |
+| `move_view_*`, `get_views_list_*`, `set_views_list_*`, `get_views_order` | ⏳ Hangs | ✅ | `set_views_layer_order` works in both |
+| `show_modal_view_meta`, `show_modal_view_edit`, `show_modal_tool` | ⏳ Hangs | ✅ | `get_view_meta` and render it yourself |
+| `table_editor_*` | ⏳ Hangs | ✅ | N/A |
+
+**Behavioural differences for resolvers that exist in both modes**:
+
+| Resolver | App mode | Static mode |
+|---|---|---|
+| `set_view_layer_filter_numeric` | Reads `value` only (via the view's slider) | Reads `from`/`to`/`attribute` (`value` is converted) |
+| `set_view_layer_filter_text` | Reads `value` only (via the search box) | Reads `values` + `attribute` (`attribute` effectively required) |
+| `set_view_layer_filter_time` | Reads `value` (slider) | Reads `from`/`to`/`hasT0`/`hasT1` |
+| `set_view_layer_transparency` | `value` = transparency 0–100 (slider) | `opacity` (or `value`) = MapLibre opacity 0–1 |
+| `view_add` on a story map (`sm`) view | Adds it to the view list | Starts the story reader (`storyRead`, autostart) |
+
+Call `get_sdk_methods` to list what the current mode supports. Note that it
+omits the `panels_*` resolvers, which are available in both modes.

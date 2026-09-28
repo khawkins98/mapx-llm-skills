@@ -9,8 +9,6 @@ description: >
   and known limitations.
 allowed-tools:
   - Read
-  - Edit
-  - Write
   - Grep
   - Glob
   - WebFetch(domain:app.mapx.org)
@@ -28,15 +26,24 @@ via the JavaScript SDK.
 
 ## SDK version context
 
-This skill was validated against the deployed MapX SDK at
-`app.mapx.org/sdk/mxsdk.umd.js` and `app.mapx.org/sdk/mxsdk.modern.js`
-(embedded version string **1.14.0-fix.1**, September 2026; previously
-validated against 1.13.19). The SDK does not pin versions in its CDN URLs,
-so the deployed version may change without notice.
+This skill was first runtime-tested against the deployed MapX SDK
+**1.13.19** (March 2026). It was then re-checked against the upstream
+source at tag **1.14.0-fix.1**, which is the version deployed at
+`app.mapx.org/sdk/mxsdk.umd.js` / `mxsdk.modern.js` as of September 2026.
+Where a 1.14 behaviour comes from reading the source rather than a runtime
+test, the reference files say so. The SDK does not pin versions in its CDN
+URLs, so the deployed version may change without notice. The npm package
+`@fxi/mxsdk` lags behind (latest `1.13.14-alpha.10`); load the SDK from
+`app.mapx.org` so the Manager matches the deployed worker.
 
 The SDK is developed in the `unep-grid/mapx` repository on GitHub (`main`
-branch) under `app/src/js/sdk`. MapX uses MapLibre GL JS under the hood
-for map rendering and camera control.
+branch) under `app/src/js/sdk`.
+
+**Map engine**: MapX switched from Mapbox GL JS v2 to **MapLibre GL JS v5**
+in April 2026 (shipped in 1.14). Passthrough (`"map"` resolver) calls must use
+MapLibre v5 signatures. Most camera/source/layer calls are unchanged, but
+some differ, e.g. `setProjection({ type: "globe" })` instead of
+`setProjection("globe")`.
 
 If a method documented here doesn't work as described, check the
 [SDK source](https://github.com/unep-grid/mapx/tree/main/app/src/js/sdk)
@@ -69,18 +76,21 @@ or any non-serializable value through the bridge. See
 
 ## Reference Files
 
-- [sdk-methods.md](sdk-methods.md) — Resolver catalog with signatures, return types, and usage notes
+- [sdk-methods.md](sdk-methods.md) — Resolver catalog with signatures, return types, static/app differences, and the events catalog
 - [initialization.md](initialization.md) — Manager constructor, project setup, iframe configuration
 - [views-and-layers.md](views-and-layers.md) — View lifecycle, GeoJSON views, MapLibre passthrough, layer ordering
 - [navigation-and-display.md](navigation-and-display.md) — Camera control, projections, 3D modes, country navigation
 - [filtering-and-data.md](filtering-and-data.md) — Numeric/text filters, transparency, data introspection, export
-- [ui-and-modals.md](ui-and-modals.md) — Language, themes, dashboards, modals, vector highlight
-- [limitations-and-workarounds.md](limitations-and-workarounds.md) — Cross-project views, event limitations, click fallbacks, REST API auth, MeiliSearch catalogue API
+- [ui-and-modals.md](ui-and-modals.md) — Language, themes, dashboards, modals, spotlight/highlighter, panels
+- [limitations-and-workarounds.md](limitations-and-workarounds.md) — Hanging promises (`askWithTimeout`), static vs app mode, cross-project views, request ceiling, event limitations, click fallbacks, REST API auth, MeiliSearch catalogue API
 - [troubleshooting.md](troubleshooting.md) — Common issues organized by symptom
 
 ## Key Rules
 
 - Always wait for the `ready` event before making SDK calls
-- Call `map_wait_idle()` before dashboard/filter/data operations
-- View IDs must belong to the connected project (cross-project calls fail silently)
+- A failing or unknown resolver makes `ask()` **hang**, never reject: wrap calls with `askWithTimeout` (limitations §9)
+- Filters read different params in static vs app mode: send `value` **and** `from`/`to` (numeric) or `value` **and** `values` + `attribute` (text)
+- Prefer `static: true` unless you need app-only features (login, `set_project`, view list management)
+- Call `map_wait_idle()` after camera moves and before rendered-data queries (it does not wait for tiles)
+- Check `view_add` returned `=== true`, and confirm with the `view_added` event
 - View types and their capabilities are documented in [views-and-layers.md](views-and-layers.md)

@@ -93,13 +93,17 @@ await mapx.ask("close_modal_all");
 
 ### Vector Spotlight (`set_vector_spotlight`)
 
-Enable or disable the visual spotlight ring that appears when clicking vector features. `set_vector_spotlight` is the active method (replacing the deprecated `set_vector_highlight`). When enabled, clicking a feature shows a highlight and triggers `click_attributes` events.
+Toggle MapX's vector spotlight overlay. `set_vector_spotlight` replaces
+`set_vector_highlight`, which still works but logs a deprecation warning.
 
 ```javascript
 await mapx.ask("set_vector_spotlight", { enable: true });
+// Omit `enable` to toggle. Optional: nLayers (number), calcArea (boolean)
 ```
 
-Best practice: enable this during SDK initialization (in the `ready` handler).
+The spotlight is **not** needed for `click_attributes`: that event fires on
+map clicks whether or not the spotlight is on. Only enable it if you want
+the visual effect.
 
 ### Feature Highlighter (`set_highlighter`)
 
@@ -116,7 +120,8 @@ await mapx.ask("set_highlighter", {
   ],
 });
 
-// Clear or refresh highlighter
+// Re-run the last config (e.g. after panning), or clear
+await mapx.ask("update_highlighter");
 await mapx.ask("reset_highlighter");
 ```
 
@@ -126,6 +131,7 @@ Highlight specific countries on the basemap by graying out all other countries. 
 
 ```javascript
 await mapx.ask("set_country_highlight", ["FRA", "DEU", "ESP"]);
+await mapx.ask("set_country_highlight", []); // clear
 ```
 
 ## Legends
@@ -210,7 +216,11 @@ await mapx.ask("panels_show_all");
 // Status inspection
 const isOpen = await mapx.ask("panels_is_open", { id: "controls_panel" });
 const isVisible = await mapx.ask("panels_is_visible", { id: "controls_panel" });
+// Also: panels_is_closed, panels_is_hidden
 ```
+
+Panel IDs vary; call `panels_list` rather than hard-coding them. Works in
+both static and app mode.
 
 ### Legacy Left Panel Visibility
 

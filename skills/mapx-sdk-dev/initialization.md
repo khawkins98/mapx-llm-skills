@@ -16,7 +16,14 @@ import { Manager } from "https://app.mapx.org/sdk/mxsdk.modern.js";
 <script src="https://app.mapx.org/sdk/mxsdk.umd.js"></script>
 <script type="module" src="/src/main.js"></script>
 ```
-When using UMD, access the constructor via `window.mxsdk.Manager`.
+When using UMD, access the constructor via `window.mxsdk.Manager`. The
+examples below write `new Manager(...)`; with UMD, add
+`const { Manager } = window.mxsdk;` first.
+
+Always load from `app.mapx.org` rather than npm. `@fxi/mxsdk` on npm lags
+the deployed build (latest `1.13.14-alpha.10` vs deployed `1.14.0-fix.1`),
+and the Manager logs `err_version_mismatch` when its version differs from
+the worker inside the iframe.
 
 ## Manager Constructor
 
@@ -45,7 +52,7 @@ const mapx = new Manager({
     height: "100%",
     border: "none",
   },
-  // static: true,  // Use /static.html for faster, lightweight embedding
+  // static: true,  // Recommended by upstream for most embeds; see "Static Mode vs. App Mode"
   // maxSimultaneousRequest: 20, // Default 10; raise if batching concurrent ask() calls
   // verbose: false, // Set true to log SDK postMessage traffic to console
 });
@@ -63,10 +70,11 @@ const mapx = new Manager({
 | `maxSimultaneousRequest` | number | `10` | Concurrency ceiling for pending `ask()` promises |
 | `verbose` | boolean | `false` | Enable color-coded console logs of SDK postMessage events |
 
-> **Concurrency warning (`maxSimultaneousRequest`)**: If your application fires more than
-> `maxSimultaneousRequest` (default 10) unresolved `ask()` calls simultaneously (e.g. via an
-> unthrottled `Promise.all`), the SDK immediately rejects excess calls with
-> `too_many_request <n>. Max= 10`. Either raise this limit or throttle batch calls.
+> **Concurrency warning (`maxSimultaneousRequest`)**: a call made while *more than*
+> `maxSimultaneousRequest` (default 10) requests are already pending is rejected with the
+> string `too_many_request <n>. Max= <m>`, **but the request is still sent and executed** by
+> MapX. Throttle batch calls (don't use an unbounded `Promise.all`), and don't blindly retry
+> side-effecting calls. See [limitations-and-workarounds.md §13](limitations-and-workarounds.md).
 
 ### Params Object
 
@@ -84,12 +92,26 @@ const mapx = new Manager({
 
 ## Static Mode vs. App Mode
 
-MapX supports two runtime modes:
+MapX supports two runtime modes. The upstream SDK README calls **static
+mode the primary usage**, so default to it unless you need an app-only
+feature.
 
-* **Static mode (`static: true`)**: Loads `/static.html`. A stripped-down, high-performance runtime without Shiny websockets, user login, or editing tools. Ideal for public dashboards and embeds where users only view and filter curated layers.
-  * *Important limitation*: `get_views_id_open` does not exist in static mode. Use `get_views_with_visible_layer()` instead.
-  * Project switching (`set_project`) is not supported in static mode.
-* **App mode (`static: false`, default)**: Loads the full MapX single-page application. Supports user accounts, project switching, full panel suites, and collaborative attribute editing.
+* **Static mode (`static: true`, recommended)**: Loads `/static.html`. A lighter,
+  faster runtime without the Shiny websocket, user login, or editing tools.
+  Suited to public dashboards and embeds where users view and filter
+  curated layers.
+  * App-only resolvers (`get_views_id_open`, `set_project`, `get_projects`, user/login,
+    `move_view_*`, `table_editor_*`, …) **hang** rather than reject. Use
+    `get_views_with_visible_layer` instead of `get_views_id_open`.
+  * Filters read `from`/`to` (numeric) and `values` + `attribute` (text).
+  * `view_add` on a story map view starts the story reader.
+* **App mode (`static: false`, SDK default)**: Loads the full MapX application.
+  Supports user accounts, project switching, the view list UI and
+  attribute editing. Filters go through the view's UI widgets and read
+  `value` only.
+
+The full resolver and parameter differences are in
+[limitations-and-workarounds.md §14](limitations-and-workarounds.md).
 
 ## Singleton Pattern
 
@@ -107,6 +129,7 @@ export function initSDK(container) {
     url: "https://app.mapx.org/?project=MX-YOUR-PROJECT-ID",
     params: { closePanels: true, language: "en", theme: "color_light" },
     style: { width: "100%", height: "100%", border: "none" },
+    static: true, // drop this if you need app-only features
   });
   return _mapx;
 }
@@ -126,13 +149,16 @@ is ready to accept commands. **Never call `ask()` before ready**.
 const mapx = initSDK(document.getElementById("mapx"));
 
 mapx.on("ready", async () => {
-  // Wait for initial tile rendering to finish
-  await mapx.ask("map_wait_idle");
-
-  // Enable feature spotlight click rings (preferred over deprecated set_vector_highlight)
-  await mapx.ask("set_vector_spotlight", { enable: true });
+  // Safe to call ask() from here on.
+  const ids = await mapx.ask("get_views_id");
+  console.log(`Project has ${ids.length} views`);
 });
 ```
+
+`ready` means the bridge is up, not that startup views have rendered.
+Listen for `view_added` for that. `map_wait_idle` right after `ready`
+usually resolves immediately, because it only waits while the camera is
+moving.
 
 ## Finding Project IDs
 
@@ -194,4 +220,5 @@ Content-Security-Policy:
 ```
 
 * `frame-src https://app.mapx.org` allows embedding the MapX application inside the iframe.
-* `script-src` and `connect-src` are required if dynamically importing `mxsdk.modern.js` or querying the MapX API directly from the host page.
+* `script-src https://app.mapx.org` is required to load the SDK at all, whether via the UMD `<script>` tag or an `import` of `mxsdk.modern.js`.
+* `connect-src` is only needed if the host page calls the MapX API directly (the iframe's own requests are governed by MapX's policy, not yours).
